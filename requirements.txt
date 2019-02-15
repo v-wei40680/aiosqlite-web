@@ -1,0 +1,6 @@
+aiohttp
+jinja2
+faker
+aiosqlite3
+gunicorn
+uvloop

@@ -1,0 +1,4 @@
+# web: gunicorn app:init --log-file -
+# web: gunicorn --pythonpath www app:init --bind localhost:9000 --worker-class aiohttp.GunicornWebWorker
+
+web: gunicorn --pythonpath www app:init --worker-class aiohttp.GunicornWebWorker

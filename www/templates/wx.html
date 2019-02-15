@@ -1,0 +1,10 @@
+{% extends '__base__.html' %}
+
+{% block title %}获取音乐{% endblock %}
+
+{% block content %}
+<p>
+    {{ music.name }}
+</p>
+<a href="{{ music.url }}">下载</a>
+{% endblock %}
