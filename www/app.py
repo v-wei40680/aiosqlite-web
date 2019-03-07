@@ -149,6 +149,8 @@ async def init():
     ])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     add_routes(app, 'handlers')
+    add_routes(app, 'handlers2')
+    add_routes(app, 'handlers_message')
     add_static(app)
     return app
 

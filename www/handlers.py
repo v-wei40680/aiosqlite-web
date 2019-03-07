@@ -11,13 +11,14 @@ from datetime import datetime as d
 import markdown2
 
 from faker import Faker
+
 import aiohttp
 from aiohttp import web
 
 from coroweb import get, post
 from apis import Page, APIValueError, APIResourceNotFoundError, APIPermissionError
 
-from models import User, Blog, Comment, Fo, Message, next_id
+from models import User, Blog, Comment, next_id
 from config import configs
 
 COOKIE_NAME = 'awesession'
@@ -107,82 +108,6 @@ async def index(*, page='1', request):
         'page': page,
         'blogs': blogs
     }
-
-@get('/')
-async def fo(*, request):
-    if request.__user__:
-        user = request.__user__.name
-        t = today_timestamp()
-        num = await Fo.findNumber('count(id)', "user_name=? and created_at>?", [user, t])
-    else:
-        num = 0
-    return {
-        '__template__': 'fo.html',
-        'num': num
-    }
-
-@get('/api/fo')
-async def api_fo(*, request):
-    if request.__user__:
-        user = request.__user__.name
-        t = today_timestamp()
-        count = await Fo.findNumber('count(id)', "user_name=? and created_at>?", [user, t])
-    else:
-        count = 0
-    return dict(count=count)
-
-async def fetch(session, url):
-    async with session.get(url) as response:
-        return await response.text()
-
-@get('/wx')
-async def wx():
-    return {
-        '__template__': 'wxget.html',
-    }
-
-@post('/wx')
-async def wx_post(*, request, url):
-    async with aiohttp.ClientSession() as session:
-        html = await fetch(session, url)
-        r = re.search('<mpvoice.*name="(\w+).*fileid="(\w+)', html)
-        base_url = 'https://res.wx.qq.com/voice/getvoice?mediaid='
-        music_id = r.group(2)
-        music_url = base_url + music_id + '.mp3'
-        return {
-            '__template__': 'wx.html',
-            'music': dict(url=music_url, name=r.group(1))
-        }
-
-@get('/fos')
-async def fos(*, request):
-    num = await Fo.findNumber('count(id)', groupBy='user_name')
-    page = Page(num)
-    if num == 0:
-        fos = []
-    else:
-        fos = await Fo.findGroup('user_name, count(id) count', orderBy='count(id) desc', limit=(page.limit, page.offset), groupBy='user_name')
-    return {
-        '__template__': 'fos.html',
-        'page': page,
-        'fos': fos
-    }
-
-@get('/api/fos')
-async def api_fos(*, page='1'):
-    page_index = get_page_index(page)
-    num = await Fo.findNumber('count(id)')
-    p = Page(num, page_index)
-    if num == 0:
-        return dict(page=p, fos=())
-    fos = await Fo.findAll(orderBy='created_at desc', limit=(p.limit, p.offset))
-    return dict(page=p, fos=fos)
-
-@post('/api/fos')
-async def api_create_fo(request):
-    fo = Fo(user_name=request.__user__.name, fo_count='1')
-    await fo.save()
-    return fo
 
 @get('/blog/{id}')
 async def get_blog(id, request):
@@ -287,70 +212,6 @@ async def manage_edit_blog(*, id, request):
         '__template__': 'manage_blog_edit.html',
         'id': id,
         'action': '/api/blogs/%s' % id
-    }
-
-@get('/api/messages')
-async def api_messages(*, page='1'):
-    page_index = get_page_index(page)
-    num = await Message.findNumber('count(id)')
-    p = Page(num, page_index)
-    if num == 0:
-        return dict(page=p, messages=())
-    messages = await Message.findAll(orderBy='created_at desc', limit=(p.limit, p.offset))
-    return dict(page=p, messages=messages)
-
-@get('/msg/{id}')
-async def get_msg(id, request):
-    msg = await Message.find(id)
-    if not request.__user__:
-        msg.read_count += 1
-    elif msg.user_name != request.__user__.name or not request.__user__.admin:
-        msg.read_count += 1
-    await msg.update()
-    msg.html_content = markdown2.markdown(msg.content)
-    return {
-        '__template__': 'msg.html',
-        'msg': msg,
-    }
-
-@get('/messages')
-async def messages(*, page='1', request):
-    page_index = get_page_index(page)
-    num = await Message.findNumber('count(id)')
-    page = Page(num)
-    if num == 0:
-        messages = []
-    else:
-        messages = await Message.findAll(orderBy='created_at desc', limit=(page.limit, page.offset))
-    return {
-        '__template__': 'messages.html',
-        'page': page,
-        'messages': messages
-    }
-
-@get('/manage/messages')
-async def manage_messages(*, page='1'):
-    return {
-        '__template__': 'manage_messages.html',
-        'page_index': get_page_index(page)
-    }
-
-@get('/manage/messages/create')
-async def manage_create_msg():
-    return {
-        '__template__': 'manage_msg_edit.html',
-        'id': '',
-        'action': '/api/messages'
-    }
-
-@get('/manage/messages/edit')
-async def manage_edit_msg(*, id, request):
-    msg = await Message.find(id)
-    check_owner(request, msg)
-    return {
-        '__template__': 'manage_msg_edit.html',
-        'id': id,
-        'action': '/api/messages/%s' % id
     }
 
 @get('/manage/users')
@@ -526,45 +387,3 @@ async def api_show_or_hide_blog(request, *, id):
     await blog.update()
     return dict(id=id)
 
-@get('/api/messages/{id}')
-async def api_get_messages(*, id):
-    msg = await Message.find(id)
-    return msg
-
-@post('/api/messages')
-async def api_create_msg(request, *, to_user, name, summary, content):
-    if not to_user or not to_user.strip():
-        raise APIValueError('to_user', 'to_user cannot be empty.')
-    if not name or not name.strip():
-        raise APIValueError('name', 'name cannot be empty.')
-    if not summary or not summary.strip():
-        raise APIValueError('summary', 'summary cannot be empty.')
-    if not content or not content.strip():
-        raise APIValueError('content', 'content cannot be empty.')
-    msg = Message(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, to_user=to_user.strip(), name=name.strip(), summary=summary.strip(), content=content.strip())
-    await msg.save()
-    return msg
-
-@post('/api/messages/{id}')
-async def api_update_msg(id, request, *, name, summary, content):
-    msg = await Message.find(id)
-    check_owner(request, msg)
-    if not name or not name.strip():
-        raise APIValueError('name', 'name cannot be empty.')
-    if not summary or not summary.strip():
-        raise APIValueError('summary', 'summary cannot be empty.')
-    if not content or not content.strip():
-        raise APIValueError('content', 'content cannot be empty.')
-    msg.name = name.strip()
-    msg.summary = summary.strip()
-    msg.content = content.strip()
-    await msg.update()
-    return msg
-
-@post('/api/messages/{id}/delete')
-async def api_delete_msg(request, *, id):
-    # check_admin(request)
-    msg = await Message.find(id)
-    check_owner(request, msg)
-    await msg.remove()
-    return dict(id=id)
