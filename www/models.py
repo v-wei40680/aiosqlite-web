@@ -83,15 +83,15 @@ class Brother(Model):
     commission = FloatField()  # 佣金
     created_at = FloatField(default=time.time)
 
-class Replenishment():
+class Replenishment(Model):
     __table__ = 'replenishments'
 
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
     user_name = StringField(ddl='varchar(50)')
-    name = StringField(ddl='varchar(50)')
+    ww_name = StringField(ddl='varchar(50)')
     order_id = StringField(ddl='varchar(50)')
     code = StringField(ddl='varchar(50)')
     num = IntegerField()
     reason = StringField(ddl='varchar(200)')
     detail = StringField(ddl='varchar(200)')
-    create_at = FloatField(default=time.time)
+    created_at = FloatField(default=time.time)

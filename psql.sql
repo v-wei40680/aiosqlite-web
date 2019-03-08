@@ -67,7 +67,7 @@ created_at float8 not null
 create table if not exists replenishments (
 id varchar(50) not null primary key,
 user_name varchar(50) not null,
-name varchar(50) not null,
+ww_name varchar(50) not null,
 order_id varchar(50) not null,
 code varchar(50) not null,
 num int not null,
