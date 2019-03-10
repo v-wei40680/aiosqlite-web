@@ -73,5 +73,6 @@ code varchar(50) not null,
 num int not null,
 reason varchar(200) not null,
 detail varchar(200) not null,
-created_at float8 not null
+created_at float8 not null,
+done bool not null
 );

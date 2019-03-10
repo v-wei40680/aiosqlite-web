@@ -95,3 +95,4 @@ class Replenishment(Model):
     reason = StringField(ddl='varchar(200)')
     detail = StringField(ddl='varchar(200)')
     created_at = FloatField(default=time.time)
+    done = BooleanField()
