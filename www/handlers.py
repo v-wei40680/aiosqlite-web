@@ -91,7 +91,7 @@ def today_timestamp():
     cday = d(now.year, now.month, now.day)
     return cday.timestamp()
 
-@get('/blogs')
+@get('/')
 async def index(*, page='1', request):
     page_index = get_page_index(page)
     num = await Blog.findNumber('count(id)')
