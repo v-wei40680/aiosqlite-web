@@ -11,7 +11,7 @@ from datetime import datetime
 import logging; logging.basicConfig(level=logging.INFO)
 
 import asyncio, os, json, time
-import uvloop
+# import uvloop
 from aiohttp import web
 from jinja2 import Environment, FileSystemLoader
 
@@ -141,7 +141,7 @@ def datetime_filter(t):
 
 
 async def init():
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    # asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
     loop = asyncio.get_event_loop()
     await orm.create_pool(loop=loop, **configs.db)
     app = web.Application(loop=loop, middlewares=[
@@ -149,8 +149,6 @@ async def init():
     ])
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     add_routes(app, 'handlers')
-    add_routes(app, 'handlers2')
-    add_routes(app, 'handlers_message')
     add_static(app)
     return app
 

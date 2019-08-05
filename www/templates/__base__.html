@@ -50,13 +50,13 @@
     {% block beforehead %}<!-- before head  -->{% endblock %}
 </head>
 <body>
-    <nav class="uk-navbar uk-navbar-attached uk-margin-bottom">
+    <nav class="uk-navbar uk-navbar-attached uk-margin-bottom uk-nav-primary">
         <div class="uk-container uk-container-center">
             <a href="/" class="uk-navbar-brand"><i class="uk-icon-home"></i></a>
             <ul class="uk-navbar-nav">
                 <li><a href="/blogs">日记</a></li>
-                <li><a href="/messages">留言</a></li>
-                <li><a href="/replenishments">补货</a></li>
+                <li><a href="/flag">旗子</a></li>
+                <li><a href="/fapiaos">发票</a></li>
             </ul>
             <div class="uk-navbar-flip">
                 <ul class="uk-navbar-nav">
@@ -90,6 +90,7 @@
         </div>
     </div>
 
+    {% block footer %}
     <div id='ft'>
     <div v-if="url_fo" class="uk-margin-large-top" style="background-color:#eee; border-top:1px solid #ccc;">
         <div class="uk-container uk-container-center uk-text-center">
@@ -108,6 +109,6 @@
         </div>
     </div>
     </div>
-    
+    {% endblock %}    
 </body>
 </html>

@@ -3,4 +3,5 @@ jinja2
 faker
 aiosqlite3
 gunicorn
-uvloop
+watchdog
+# uvloop

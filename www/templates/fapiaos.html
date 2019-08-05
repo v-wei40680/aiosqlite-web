@@ -1,0 +1,142 @@
+{% extends '__base__.html' %}
+
+{% block title %}订单{% endblock %}
+
+{% block beforehead %}
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="point pink"></div>
+    <div class="point read"></div>
+    <div class="point green"></div>
+    <div class="point blue"></div>
+    <div id="app">
+        输入Cookie：<input type="text" v-model='cookie' placeholder="设置cookie"><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
+        <br>
+        店铺id：<span v-text='re_shop_id'></span><br>
+        <button @click='post_trades'>开始</button>
+        <button @click='init'>更新</button>
+        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
+        <table class="uk-table uk-table-hover">
+            <thead>
+                <tr>
+                    <th v-for='h in heads'>${ h }</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for='t in filterItems'>
+                    <td>${ t.nick }</td>
+                    <td>${ t.tradeId }</td>
+                    <td v-text='filterFlag(t.flag)'></td>
+                    <td>${ t.price }</td>
+                    <td>${ t.shop }</td>
+                    <td>${ t.status }</td>
+                    <td>${ t.createTime }</td>
+                    <td>${ t.created_at }</td>
+                    <td>${ t.mark }</td>
+                    <td>${ t.msg }</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        var app = new Vue({
+            el: '#app',
+            delimiters: ['${','}'],
+            data: {
+                trades: [],
+                search: '',
+                cookie: '',
+                pageNum: 1,
+                heads: ['旺旺', '订单号', '旗子', '价格', '店铺', '交易状态', '备注', '留言', '交易时间', '登记时间'],
+                fields: ['nick', 'tradeId', 'flag', 'price', 'shop', 'status', 'mark', 'msg', 'createTime', 'created_at'],
+            },
+            computed: {
+                re_shop_id () {
+                    if (this.cookie!='') {
+                        var re = /x=(\w+)/;
+                        var a = re.exec(this.cookie);
+                        var shop_id = a[1]
+                        if (shop_id === '3079394145') {
+                            return '通众旗舰店'+a[1]
+                        } else if (shop_id == '2933051711') {
+                            return '亿维办公旗舰店'+a[1]
+                        } else if (shop_id == '925025092') {
+                            return '亿维通众专卖店'+a[1]
+                        } else if (shop_id == '2829884134') {
+                            return '众泰专营店'+a[1]
+                        } else if (shop_id == '1584616501') {
+                            return '易加'+a[1]
+                        }
+                        
+                    } else {
+                        return ''
+                    }
+                },
+                filterItems () {
+                    return this.trades.filter((item) => {
+                        var self = this
+                        function fi(key) {
+                            return item[key].match(self.search)
+                        }
+                        return fi('tradeId') || fi('price') || fi('nick') || fi('createTime') || fi('msg') || fi('shop') || fi('mark');
+                    });
+                }
+            },
+            created () {
+                this.init();
+            },
+            methods: {
+                init () {
+                    if (!localStorage.getItem('cookie')) localStorage.setItem('cookie', '');
+                    this.cookie = localStorage.getItem('cookie');
+                    url = '/api/fapiaos'
+                    fetch(url)
+                    .then(resp => resp.json())
+                    .then(data => {
+                        this.trades = data.trades;
+                        console.log(this.trades)
+                    })
+                },
+                post_trades () {
+                    localStorage.setItem('cookie', this.cookie);
+                    var data = {'cookie': this.cookie, 'pageNum': this.pageNum}
+                    var url = '/api/fapiaos'
+                    fetch(url, {
+                        method: 'POST', // or 'PUT'
+                        body: JSON.stringify(data), // data can be `string` or {object}!
+                        headers: new Headers({
+                            'Content-Type': 'application/json'
+                        })
+                        }).then(res => res.json())
+                        .catch(error => console.log('Error:', error))
+                        .then(response => {
+                            console.log('Success:', response);
+                            this.init();
+                        });
+                    
+                },
+                filterFlag (flag) {
+                    var flags = [
+                        (0, '灰色'), (1, '红色'),(2, '黄色'),(3, '绿色'),(4, '蓝色'),(5, '紫色')
+                    ]
+                    return flags[flag]
+                }
+            }
+        })
+        /*
+        $(function() {
+            setInterval(function () {
+                app.post_trades();
+                console.log('sleep 2 seconds')
+            } , 1000*60*28)
+        })
+        */
+    </script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

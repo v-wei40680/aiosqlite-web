@@ -1,0 +1,83 @@
+{% extends '__base__.html' %}
+
+{% block title %}旗子{% endblock %}
+
+{% block beforehead %}
+    <style>
+        body {
+            background-color: pink;
+        }
+
+        .point {
+            background-color: #CCE8CF;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .read {
+            background-color: #CCE8CF;
+        }
+
+        .green {
+            background-color: green;
+        }
+
+        .blue {
+            background-color: lightblue;
+        }
+
+        .point:hover {
+            background: #000;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="point pink"></div>
+    <div class="point read"></div>
+    <div class="point green"></div>
+    <div class="point blue"></div>
+    <div id="app">
+        <form action="/flag" method="post">
+            <textarea v-model='text' name='text' id="" cols="30" rows="10"></textarea>
+            <br>
+            <button type="submit">开始</button>
+        </form>
+
+        <table class="uk-table uk-table-hover">
+            <thead>
+                <tr>
+                    <th class="uk-width-5-10">旺旺</th>
+                    <th class="uk-width-2-10">订单号</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flag in flags %}
+                <tr>
+                    <td>{{ flag.nick }}</td>
+                    <td>{{ flag.tradeId }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function changeBackgroundColor(cl, color) {
+            $(cl).click(function () {
+                $('body').css('background', color)
+            })
+        }
+        $(function () {
+            changeBackgroundColor('.pink', 'pink');
+            changeBackgroundColor('.read', '#CCE8CF')
+            changeBackgroundColor('.green', 'yellowgreen')
+            changeBackgroundColor('.blue', 'lightblue')
+        })
+    </script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}

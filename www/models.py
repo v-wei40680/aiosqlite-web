@@ -50,49 +50,18 @@ class Comment(Model):
     content = TextField()
     created_at = FloatField(default=time.time)
 
-class Message(Model):
-    __table__ = 'messages'
-
+class Flag(Model):
+    __table__ = 'flags'
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
-    user_id = StringField(ddl='varchar(50)')
-    user_name = StringField(ddl='varchar(50)')
-    user_image = StringField(ddl='varchar(500)')
-    to_user = StringField(ddl='varchar(50)')
-    name = StringField(ddl='varchar(50)')
-    summary = StringField(ddl='varchar(200)')
-    content = TextField()
+    nick = StringField(ddl='varchar(50)')
+    tradeId = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
-
-class Fo(Model):
-    __table__ = 'fos'
-
-    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
-    user_name = StringField(ddl='varchar(50)')
-    created_at = FloatField(default=time.time)
-
-class Brother(Model):
-    __table__ = 'brothers'
-
-    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
-    user_id = StringField(ddl='varchar(50)')
-    user_name = StringField(ddl='varchar(50)')
+    createTime = StringField(ddl='varchar(50)')
+    flag = IntegerField()
     shop = StringField(ddl='varchar(50)')
-    do_time = FloatField()
-    ww_name = StringField(ddl='varchar(50)')
-    price = FloatField()
-    commission = FloatField()  # 佣金
-    created_at = FloatField(default=time.time)
+    status = StringField(ddl='varchar(50)')
 
-class Replenishment(Model):
-    __table__ = 'replenishments'
-
-    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
-    user_name = StringField(ddl='varchar(50)')
-    ww_name = StringField(ddl='varchar(50)')
-    order_id = StringField(ddl='varchar(50)')
-    code = StringField(ddl='varchar(50)')
-    num = IntegerField()
-    reason = StringField(ddl='varchar(200)')
-    detail = StringField(ddl='varchar(200)')
-    created_at = FloatField(default=time.time)
-    done = BooleanField()
+class Cookie(Model):
+    __table__ = 'cookies'
+    id = StringField(primary_key=True, ddl='varchar(50)')
+    cookie_str = StringField(ddl='varchar(50)')

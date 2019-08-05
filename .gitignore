@@ -3,7 +3,7 @@
 test.db
 test.txt
 sina.html
-
+.vscode
 # C extensions
 *.so
 
