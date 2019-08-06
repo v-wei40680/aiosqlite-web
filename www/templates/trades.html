@@ -1,4 +1,4 @@
-{% extends '__base__.html' %}
+{% extends 'base.html' %}
 
 {% block title %}订单{% endblock %}
 
@@ -32,37 +32,7 @@
             background: #000;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
-{% endblock %}
-
-{% block content %}
-    <div class="point pink"></div>
-    <div class="point read"></div>
-    <div class="point green"></div>
-    <div class="point blue"></div>
-    <div id="app">
-        输入Cookie：<input type="text" v-model='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
-        <textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
-        <br>
-        店铺id：<span v-text='re_shop_id'></span><br>
-        <button @click='post_trades'>开始</button>
-        <button @click='init'>更新</button>
-        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
-        <table class="uk-table uk-table-hover">
-            <thead>
-                <tr>
-                    <th v-for='h in heads'>${ h }</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for='t in filterItems'>
-                    <td  v-for='f in fields'>${ t[f] }</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
+    
     <script>
         function changeBackgroundColor(cl, color) {
             $(cl).click(function () {
@@ -76,6 +46,40 @@
             changeBackgroundColor('.blue', 'lightblue')
         })
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+{% endblock %}
+
+{% block content %}
+    <div class="point pink"></div>
+    <div class="point read"></div>
+    <div class="point green"></div>
+    <div class="point blue"></div>
+    <div id="app">
+        <!-- <form action=""> -->
+        输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
+        <textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
+        <br>
+        店铺id：<span v-text='re_shop_id'></span><br>
+        <button @click='post_trades'>开始</button>
+        <button @click='init'>更新</button>
+        <span @click="reset">重置</span>
+        <!-- </form> -->
+        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th v-for='h in heads'>${ h }</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for='t in filterItems'>
+                    <td  v-for='f in fields'>${ t[f] }</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
 
     <script>
         var app = new Vue({
@@ -157,17 +161,19 @@
                             this.init();
                         });
                     
+                },
+                reset () {
+                    this.cookie = '';
+                    this.names = '';
                 }
             }
         })
-        /*
-        $(function() {
-            setInterval(function () {
-                app.post_trades();
-                console.log('sleep 2 seconds')
-            } , 1000*60*6)
-        })
-        */
+        // $(function() {
+        //     setInterval(function () {
+        //         app.post_trades();
+        //         console.log('sleep 2 seconds')
+        //     } , 1000*60*6)
+        // })
     </script>
 {% endblock %}
 
