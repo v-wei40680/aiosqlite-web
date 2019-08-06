@@ -456,7 +456,7 @@ async def get_api_trades(*, page='1', request):
     print(p, page_index)
     if num == 0:
         return dict(page=p, trades=())
-    trades = Trade.find().sort('created_at', pymongo.DESCENDING).limit(200)
+    trades = Trade.find().sort('createTime', pymongo.DESCENDING).limit(200)
     datas = list(trades)
     for x in datas:
         del x['_id']
@@ -465,7 +465,7 @@ async def get_api_trades(*, page='1', request):
     return data
 
 @post('/api/trades')
-async def api_create_trade(request, *, names, cookie, pageNum):
+async def api_create_trade(request, *, names, cookie, pageNum, userAgent):
     """
     """
     cs = parse_cookie(cookie)
@@ -485,12 +485,13 @@ async def api_create_trade(request, *, names, cookie, pageNum):
     else:
         #logging.info('no names')
         pass
-    await update_trade(cs, names, pageNum)
+    await update_trade(cs, names, pageNum, userAgent)
     return 'names save'
 
-async def update_trade(cs, names, pageNum):
+async def update_trade(cs, names, pageNum, userAgent):
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
     base_url = 'https://trade.taobao.com'
+    headers['user-agent'] = userAgent
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers) as session:
         for page in range(1, int(pageNum)+1):
             ps['pageNum'] = page
@@ -512,7 +513,7 @@ async def update_trade(cs, names, pageNum):
                     trade['flag'] = m['extra']['sellerFlag']  # 旗子
                     trade['status'] = m['statusInfo']['text']  # 交易状态
                     trade['shop'] = cs['x']
-                    if trade['nick'] in names and trade['flag'] != 5 and trade['status'] != '交易关闭':
+                    if trade['nick'] in names and trade['flag'] != 5 and (trade['status'] != '交易关闭' or trade['status'] != '等待买家付款'):
                         'do flag'
                         url = base_url + m['operations'][0]['dataUrl']
                         ps1 = get_params(params_flag)
@@ -543,7 +544,7 @@ async def get_api_fapiaos(*, page='1', request):
     print(p, page_index)
     if num == 0:
         return dict(page=p, trades=())
-    trades = FaPiao.find().sort('created_at', pymongo.DESCENDING).limit(2000)
+    trades = FaPiao.find().sort('createTime', pymongo.DESCENDING).limit(2000)
     datas = list(trades)
     for x in datas:
         del x['_id']
@@ -552,10 +553,11 @@ async def get_api_fapiaos(*, page='1', request):
     return data
 
 @post('/api/fapiaos')
-async def get_tm_trade(request, *, cookie, pageNum):
+async def get_tm_trade(request, *, cookie, pageNum, userAgent):
     cs = parse_cookie(cookie)
     shopId = cs['x']
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
+    headers['user-agent'] = userAgent
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers) as session:
         for page in range(1, int(pageNum)+1):
             ps['pageNum'] = page

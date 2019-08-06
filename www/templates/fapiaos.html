@@ -1,25 +1,29 @@
-{% extends '__base__.html' %}
+{% extends 'base.html' %}
 
 {% block title %}订单{% endblock %}
 
-{% block beforehead %}
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+{% block navLeft %}
+<li><a href="/trades">紫色 <span class="sr-only">(current)</span></a></li>
+<li class="active"><a href="/fapiaos">发票</a></li>
 {% endblock %}
 
 {% block content %}
-    <div class="point pink"></div>
-    <div class="point read"></div>
-    <div class="point green"></div>
-    <div class="point blue"></div>
     <div id="app">
-        输入Cookie：<input type="text" v-model='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
+        输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数" max="10" min="1"><br>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
         <button @click='post_trades'>开始</button>
         <button @click='init'>更新</button>
+        <span @click="reset">重置</span>
         <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
-        <table class="uk-table uk-table-hover">
+        <select v-model="selected">
+            <option v-for="option in os" v-bind:value="option.value">
+                ${ option.text }
+            </option>
+        </select>
+        <span>Selected: ${ selected }</span>
+        <table class="table">
             <thead>
                 <tr>
                     <th v-for='h in heads'>${ h }</th>
@@ -31,12 +35,15 @@
                     <td>${ t.tradeId }</td>
                     <td v-text='filterFlag(t.flag)'></td>
                     <td>${ t.price }</td>
-                    <td>${ t.shop }</td>
+                    <td>${ filterShop(t.shop) }</td>
                     <td>${ t.status }</td>
+                    <td>
+                        <!-- <textarea v-text='t.mark ' cols="30" rows="10"></textarea> -->
+                        <p>${ t.mark }</p>
+                    </td>
+                    <td>${ t.msg }</td>
                     <td>${ t.createTime }</td>
                     <td>${ t.created_at }</td>
-                    <td>${ t.mark }</td>
-                    <td>${ t.msg }</td>
                 </tr>
             </tbody>
         </table>
@@ -51,6 +58,13 @@
                 search: '',
                 cookie: '',
                 pageNum: 1,
+                selected: '3079394145',
+                userAgent: navigator.userAgent,
+                os: [
+                    { text: 'One', value: '3079394145' },
+                    { text: 'Two', value: '2933051711' },
+                    { text: 'Three', value: '925025092' }
+                ],
                 heads: ['旺旺', '订单号', '旗子', '价格', '店铺', '交易状态', '备注', '留言', '交易时间', '登记时间'],
                 fields: ['nick', 'tradeId', 'flag', 'price', 'shop', 'status', 'mark', 'msg', 'createTime', 'created_at'],
             },
@@ -80,7 +94,7 @@
                     return this.trades.filter((item) => {
                         var self = this
                         function fi(key) {
-                            return item[key].match(self.search)
+                            return item[key].toLowerCase().match(self.search.toLowerCase())
                         }
                         return fi('tradeId') || fi('price') || fi('nick') || fi('createTime') || fi('msg') || fi('shop') || fi('mark');
                     });
@@ -103,7 +117,7 @@
                 },
                 post_trades () {
                     localStorage.setItem('cookie', this.cookie);
-                    var data = {'cookie': this.cookie, 'pageNum': this.pageNum}
+                    var data = {'cookie': this.cookie, 'pageNum': Math.abs(this.pageNum), 'userAgent': this.userAgent}
                     var url = '/api/fapiaos'
                     fetch(url, {
                         method: 'POST', // or 'PUT'
@@ -124,17 +138,42 @@
                         (0, '灰色'), (1, '红色'),(2, '黄色'),(3, '绿色'),(4, '蓝色'),(5, '紫色')
                     ]
                     return flags[flag]
-                }
+                },
+                filterShop (shop_id) {
+                    if (shop_id === '3079394145') {
+                        return '通众旗舰店'
+                    } else if (shop_id == '2933051711') {
+                        return '亿维办公旗舰店'
+                    } else if (shop_id == '925025092') {
+                        return '亿维通众专卖店'
+                    } else if (shop_id == '2829884134') {
+                        return '众泰专营店'
+                    } else if (shop_id == '1584616501') {
+                        return '易加'
+                    }
+                },
+                reset () {
+                    this.cookie = '';
+                },
+                filterShopid (){
+                    return this.trades.filter((item) => {
+                        return item.shop == this.selected;
+                    });
+                },
+                filterFapiao () {
+                    return this.trades.filter((item) => {
+                        return item['mark'].match('纸票') || item['msg'].match('票')
+                    });
+                },
             }
         })
-        /*
+        
         $(function() {
             setInterval(function () {
                 app.post_trades();
                 console.log('sleep 2 seconds')
             } , 1000*60*28)
         })
-        */
     </script>
 {% endblock %}
 

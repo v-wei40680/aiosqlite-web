@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}订单{% endblock %}
+{% block title %}紫色{% endblock %}
 
 {% block beforehead %}
     <style>
@@ -57,7 +57,7 @@
     <div id="app">
         <!-- <form action=""> -->
         输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数" max="10" min="1"><br>
         <textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
@@ -90,6 +90,7 @@
                 search: '',
                 names: '',
                 cookie: '',
+                userAgent: navigator.userAgent,
                 pageNum: 1,
                 fields: ['nick', 'tradeId', 'flag', 'price', 'shop', 'status', 'createTime', 'created_at'],
                 heads: ['旺旺', '订单号', '旗子', '价格', '店铺', '交易状态', '交易时间', '登记时间']
@@ -146,7 +147,7 @@
                 post_trades () {
                     localStorage.setItem('cookie', this.cookie);
                     localStorage.setItem('names', this.names);
-                    var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum}
+                    var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': Math.abs(this.pageNum), 'userAgent': this.userAgent}
                     var url = '/api/trades'
                     fetch(url, {
                         method: 'POST', // or 'PUT'
@@ -168,12 +169,12 @@
                 }
             }
         })
-        // $(function() {
-        //     setInterval(function () {
-        //         app.post_trades();
-        //         console.log('sleep 2 seconds')
-        //     } , 1000*60*6)
-        // })
+        $(function() {
+            setInterval(function () {
+                app.post_trades();
+                console.log('sleep 2 seconds')
+            } , 1000*60*6)
+        })
     </script>
 {% endblock %}
 
