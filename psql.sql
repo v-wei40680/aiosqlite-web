@@ -40,12 +40,21 @@ nick varchar(50) not null,
 tradeId varchar(50) not null,
 created_at float8 not null,
 createTime varchar(50) not null,
-flag int not null,
+flag varchar(50) not null,
+price varchar(50) not null,
 shop varchar(50) not null,
 status varchar(50) not null
 );
 
-create table if not exists cookies (
+create table if not exists fapiaos (
 id varchar(50) not null primary key,
-cookie_str varchar(50) not null
+nick varchar(50) not null,
+created_at float8 not null,
+createTime varchar(50) not null,
+flag varchar(50) not null,
+price varchar(50) not null,
+shop varchar(50) not null,
+status varchar(50) not null,
+mark text not null,
+msg text not null
 );

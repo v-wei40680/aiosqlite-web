@@ -18,7 +18,7 @@ from aiohttp import web
 from coroweb import get, post
 from apis import Page, APIValueError, APIResourceNotFoundError, APIPermissionError
 
-from models import User, Blog, Comment, next_id, Flag, Cookie
+from models import User, Blog, Comment, next_id, Flag, FaPiao
 from config import configs
 
 COOKIE_NAME = 'awesession'
@@ -391,6 +391,7 @@ async def api_show_or_hide_blog(request, *, id):
     await blog.update()
     return dict(id=id)
 
+from flag import parse_cookie, headers, db, get_params, params_orders, params_flag
 
 @get('/flag')
 async def flag():
@@ -428,12 +429,6 @@ async def api_flag(*, page='1'):
     flags = await Flag.findAll(orderBy='created_at desc', limit=(p.limit, p.offset))
     return dict(page=p, flags=flags)
 
-
-from flag import parse_cookie, headers, db, get_params, params_orders, params_flag
-
-
-Trade = db['trades']
-FaPiao = db['fapiao']
 ps = get_params(params_orders)
 base_url = 'https://trade.taobao.com'
 
@@ -445,53 +440,42 @@ async def get_trades(*, request):
 
 import json
 
-import pymongo
-
-
 @get('/api/trades')
 async def get_api_trades(*, page='1', request):
     page_index = get_page_index(page)
-    num = Trade.find().count()
+    num = await Flag.findNumber('count(id)')
     p = Page(num, page_index)
     print(p, page_index)
     if num == 0:
         return dict(page=p, trades=())
-    trades = Trade.find().sort('createTime', pymongo.DESCENDING).limit(200)
-    datas = list(trades)
-    for x in datas:
-        del x['_id']
-        x['created_at'] = d.strftime(x['created_at'],'%Y-%m-%d %H:%M:%S')
+    flags = await Flag.findAll(orderBy='createTime desc', limit=(200, p.offset))
+    datas = list(flags)
+    print(datas)
     data = dict(page=p, trades=datas)
     return data
 
 @post('/api/trades')
-async def api_create_trade(request, *, names, cookie, pageNum, userAgent):
+async def api_create_trade(request, *, names, cookie, pageNum):
     """
     """
     cs = parse_cookie(cookie)
     shopId = cs['x']
     print(shopId, names)
     if names != '':
-        trades = []
         for name in names.splitlines():
-            # flag = Flag(nick=name, shop=cs['x'], tradeId='', created_at=d.now(), status='', createTime='', price='', flag='')
-            trade = dict(nick=name, shop=cs['x'], tradeId='', created_at=d.now(), status='', createTime='', price='', flag='')
-            num = Trade.find({'nick': name}).count()
-            if num < 1:
-                trades.append(trade)
-        # logging.info('trades: %s ' % trades)
-        if trades != []:
-           Trade.insert_many(trades)
+            flag_num = await Flag.findNumber('count(id)', "nick=?", [name])
+            if flag_num < 1:
+                flag = Flag(nick=name, shop=cs['x'], tradeId='', created_at=d.now(), status='', createTime='', price='', flag='')
+                await flag.save()
     else:
         #logging.info('no names')
         pass
-    await update_trade(cs, names, pageNum, userAgent)
+    await update_trade(cs, names, pageNum)
     return 'names save'
 
-async def update_trade(cs, names, pageNum, userAgent):
+async def update_trade(cs, names, pageNum):
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
     base_url = 'https://trade.taobao.com'
-    headers['user-agent'] = userAgent
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers) as session:
         for page in range(1, int(pageNum)+1):
             ps['pageNum'] = page
@@ -503,32 +487,32 @@ async def update_trade(cs, names, pageNum, userAgent):
                 # print(r.status)
                 datas = json.loads(datas)
                 mainOrders = datas['mainOrders']
-                trades = []
                 for m in mainOrders[:]:
-                    trade = {}
-                    trade['tradeId'] = m['id']
-                    trade['nick'] = nick = m['buyer']['nick']
-                    trade['createTime'] = m['orderInfo']['createTime'] # 下单时间
-                    trade['price'] = m['payInfo']['actualFee']  # 总价格
-                    trade['flag'] = m['extra']['sellerFlag']  # 旗子
-                    trade['status'] = m['statusInfo']['text']  # 交易状态
-                    trade['shop'] = cs['x']
-                    if trade['nick'] in names and trade['flag'] != 5 and (trade['status'] != '交易关闭' or trade['status'] != '等待买家付款'):
-                        'do flag'
-                        url = base_url + m['operations'][0]['dataUrl']
-                        ps1 = get_params(params_flag)
-                        ps1['_tb_token_'] = cs['_tb_token_']
-                        ps1['biz_order_id'] = m['id']
-                        ps1['flag'] = 5
-                        print(url, ps1)
-                        async with session.post(url, data=ps1, cookies=cs) as resp:
-                            print(await r.text())
-                            trade['flag'] = ps1['flag']
-                    condition = {'nick': nick}
-                    Trade.update_one(condition, {'$set': trade})
-                    # print(trade)
-                # Trade.insert_many(trades)
-                # return 'parse trade'
+                    nick = m['buyer']['nick']
+                    flag_num = await Flag.findNumber('count(id)', "nick=?", [nick])
+                    if flag_num > 0:
+                        flags = await Flag.findAll('nick=?', [nick], orderBy='createTime desc')
+                        flag = flags[0]
+                        print('flag', nick, flag)
+                        flag.nick = m['buyer']['nick']
+                        flag.tradeId = m['id']
+                        flag.createTime = m['orderInfo']['createTime'] # 下单时间
+                        flag.price = m['payInfo']['actualFee']  # 总价格
+                        flag.flag = m['extra']['sellerFlag']  # 旗子
+                        flag.status = m['statusInfo']['text']  # 交易状态
+                        flag.shop = cs['x']
+                        if flag.nick in names and flag.flag != 5 and flag.status != '交易关闭':
+                            'do flag'
+                            url = base_url + m['operations'][0]['dataUrl']
+                            ps1 = get_params(params_flag)
+                            ps1['_tb_token_'] = cs['_tb_token_']
+                            ps1['biz_order_id'] = m['id']
+                            ps1['flag'] = 5
+                            print(url, ps1)
+                            async with session.post(url, data=ps1, cookies=cs) as resp:
+                                print(await r.text())
+                                flag.flag = ps1['flag']
+                        await flag.update()
 
 @get('/fapiaos')
 async def get_fapiaos(*, request):
@@ -539,25 +523,21 @@ async def get_fapiaos(*, request):
 @get('/api/fapiaos')
 async def get_api_fapiaos(*, page='1', request):
     page_index = get_page_index(page)
-    num = FaPiao.find().count()
+    num = await FaPiao.findNumber('count(id)')
     p = Page(num, page_index)
     print(p, page_index)
     if num == 0:
         return dict(page=p, trades=())
-    trades = FaPiao.find().sort('createTime', pymongo.DESCENDING).limit(2000)
-    datas = list(trades)
-    for x in datas:
-        del x['_id']
-        x['created_at'] = d.strftime(x['created_at'],'%Y-%m-%d %H:%M:%S')
+    fapiaos = await FaPiao.findAll(orderBy='createTime desc', limit=(2000, p.offset))
+    datas = list(fapiaos)
     data = dict(page=p, trades=datas)
     return data
 
 @post('/api/fapiaos')
-async def get_tm_trade(request, *, cookie, pageNum, userAgent):
+async def get_tm_trade(request, *, cookie, pageNum):
     cs = parse_cookie(cookie)
     shopId = cs['x']
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
-    headers['user-agent'] = userAgent
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers) as session:
         for page in range(1, int(pageNum)+1):
             ps['pageNum'] = page
@@ -569,31 +549,21 @@ async def get_tm_trade(request, *, cookie, pageNum, userAgent):
                 # print(r.status)
                 datas = json.loads(datas)
                 mainOrders = datas['mainOrders']
-                trades = []
                 for m in mainOrders[:]:
-                    trade = {}
-                    trade['tradeId'] = m['id']
-                    trade['nick'] = nick = m['buyer']['nick']
-                    trade['createTime'] = m['orderInfo']['createTime'] # 下单时间
-                    trade['price'] = m['payInfo']['actualFee']  # 总价格
-                    trade['flag'] = m['extra']['sellerFlag']  # 旗子
-                    trade['status'] = m['statusInfo']['text']  # 交易状态
-                    trade['shop'] = cs['x']
-                    trade['created_at']=d.now()
-
-                    if len(m['operations'][0].keys()) == 7 and trade['flag'] != 5:
+                    nick = m['buyer']['nick']
+                    tradeId = m['id']
+                    createTime = m['orderInfo']['createTime'] # 下单时间
+                    price = m['payInfo']['actualFee']  # 总价格
+                    flag = m['extra']['sellerFlag']  # 旗子
+                    status = m['statusInfo']['text']  # 交易状态
+                    if len(m['operations'][0].keys()) == 7 and flag != 5:
                         # 有备注
-                        
                         mark_url = base_url+ m['operations'][0]['dataUrl']
                         async with session.get(mark_url, cookies=cs) as r:
                             mark = await r.text()
                             mark = json.loads(mark)['tip']
-                            # print(mark)
-                            trade['mark'] = mark
-                        
-                        pass
                     else:
-                        trade['mark'] = ''
+                        mark = ''
                     o = m['buyer']['operations']
                     if len(o) > 1:
                         # 有留言
@@ -603,14 +573,10 @@ async def get_tm_trade(request, *, cookie, pageNum, userAgent):
                                 msg = await r.text()
                                 msg = json.loads(msg)['tip']
                                 print(msg)
-                                trade['msg'] = msg
                         except KeyError as e:
-                            trade['msg'] = ''
+                            msg = ''
                             print(e)
                     else:
-                        trade['msg'] = ''
-                    condition = {'tradeId': m['id']}
-                    if FaPiao.find(condition).count() < 1:
-                        FaPiao.save(trade)
-                    else:
-                        FaPiao.update_one(condition, {'$set': trade})
+                        msg = ''
+                    fapiao = FaPiao(nick=nick, shop=cs['x'], id=tradeId, created_at=d.now(), status=status, createTime=createTime, price=price, flag=flag, mark=mark, msg=msg)
+                    await fapiao.save()

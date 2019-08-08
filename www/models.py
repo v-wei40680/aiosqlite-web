@@ -50,6 +50,7 @@ class Comment(Model):
     content = TextField()
     created_at = FloatField(default=time.time)
 
+
 class Flag(Model):
     __table__ = 'flags'
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
@@ -58,10 +59,19 @@ class Flag(Model):
     created_at = FloatField(default=time.time)
     createTime = StringField(ddl='varchar(50)')
     flag = IntegerField()
+    price = FloatField()
     shop = StringField(ddl='varchar(50)')
     status = StringField(ddl='varchar(50)')
 
-class Cookie(Model):
-    __table__ = 'cookies'
+class FaPiao(Model):
+    __table__ = 'fapiaos'
     id = StringField(primary_key=True, ddl='varchar(50)')
-    cookie_str = StringField(ddl='varchar(50)')
+    nick = StringField(ddl='varchar(50)')
+    created_at = FloatField(default=time.time)
+    createTime = StringField(ddl='varchar(50)')
+    flag = StringField(ddl='varchar(50)')
+    price = StringField(ddl='varchar(50)')
+    shop = StringField(ddl='varchar(50)')
+    status = StringField(ddl='varchar(50)')
+    mark = TextField()
+    msg = TextField()
