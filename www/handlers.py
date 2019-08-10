@@ -137,7 +137,6 @@ async def register():
     email = fake.email()
     password = fake.numerify() + fake.numerify()
     u = dict(username=username, email=email, password=password)
-    print(u)
     return {
         '__template__': 'register.html',
         'u': u
@@ -391,7 +390,7 @@ async def api_show_or_hide_blog(request, *, id):
     await blog.update()
     return dict(id=id)
 
-from flag import parse_cookie, headers, db, get_params, params_orders, params_flag
+from flag import parse_cookie, headers, get_params, params_orders, params_flag
 
 @get('/flag')
 async def flag():
@@ -402,7 +401,6 @@ async def flag():
     async with aiohttp.ClientSession(cookies=cookies) as session:
         async with session.get(url) as resp:
             r = resp.json()
-            print(r)
             assert await resp.json() == {
             "cookies": {"cookies_are": "working"}}
     return {
@@ -413,8 +411,8 @@ async def flag():
 @post('/flag')
 async def post_flag(request, *, text):
     names = text
+    print(names)
     for name in names.split():
-        print(name)
         flag = Flag(nick=name, tradeId='')
         await flag.save()
     return 'redirect:/flag'
@@ -450,7 +448,6 @@ async def get_api_trades(*, page='1', request):
         return dict(page=p, trades=())
     flags = await Flag.findAll(orderBy='createTime desc', limit=(200, p.offset))
     datas = list(flags)
-    print(datas)
     data = dict(page=p, trades=datas)
     return data
 

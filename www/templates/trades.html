@@ -57,7 +57,7 @@
     <div id="app">
         <!-- <form action=""> -->
         输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数" max='10' min='1'><br>
         <textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
@@ -122,7 +122,7 @@
                         function fi(key) {
                             return item[key].match(self.search)
                         }
-                        return fi('tradeId') || fi('price') || fi('nick') || fi('createTime') || fi('shop');
+                        return fi('tradeId') || fi('price') || fi('nick') || fi('createTime') || fi('shop') || fi('status');
                     });
                 }
             },
@@ -168,12 +168,12 @@
                 }
             }
         })
-        // $(function() {
-        //     setInterval(function () {
-        //         app.post_trades();
-        //         console.log('sleep 2 seconds')
-        //     } , 1000*60*6)
-        // })
+        $(function() {
+            setInterval(function () {
+                app.post_trades();
+                console.log('sleep 2 seconds')
+            } , 1000*60*6)
+        })
     </script>
 {% endblock %}
 

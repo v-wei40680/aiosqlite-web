@@ -41,7 +41,7 @@
                         <!-- <textarea v-text='t.mark ' cols="30" rows="10"></textarea> -->
                         <p>${ t.mark }</p>
                     </td>
-                    <td>${ t.msg }</td>
+                    <td><p>${ t.msg }</p></td>
                     <td>${ t.createTime }</td>
                     <td>${ t.created_at }</td>
                 </tr>
@@ -167,12 +167,12 @@
             }
         })
         
-        // $(function() {
-        //     setInterval(function () {
-        //         app.post_trades();
-        //         console.log('sleep 2 seconds')
-        //     } , 1000*60*28)
-        // })
+        $(function() {
+            setInterval(function () {
+                app.post_trades();
+                console.log('sleep 2 seconds')
+            } , 1000*60*28)
+        })
     </script>
 {% endblock %}
 
