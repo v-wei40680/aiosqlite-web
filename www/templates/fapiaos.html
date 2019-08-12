@@ -9,14 +9,14 @@
 
 {% block content %}
     <div id="app">
-        输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
+        输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie"><br>
         订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
         <button @click='post_trades'>开始</button>
         <button @click='init'>更新</button>
         <span @click="reset">重置</span>
-        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
+        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
         <select v-model="selected">
             <option v-for="option in os" v-bind:value="option.value">
                 ${ option.text }

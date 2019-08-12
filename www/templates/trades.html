@@ -56,16 +56,16 @@
     <div class="point blue"></div>
     <div id="app">
         <!-- <form action=""> -->
-        输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
+        输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie"><br>
         订单页数：<input type="number" v-model='pageNum' placeholder="设置页数" max='10' min='1'><br>
-        <textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
+        <textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
         <button @click='post_trades'>开始</button>
         <button @click='init'>更新</button>
         <span @click="reset">重置</span>
         <!-- </form> -->
-        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
+        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
         <table class="table">
             <thead>
                 <tr>
@@ -74,7 +74,14 @@
             </thead>
             <tbody>
                 <tr v-for='t in filterItems'>
-                    <td  v-for='f in fields'>${ t[f] }</td>
+                    <td>${ t.nick }</td>
+                    <td>${ t.tradeId }</td>
+                    <td>${ t.flag }</td>
+                    <td>${ t.price }</td>
+                    <td>${ filterShop(t.shop) }</td>
+                    <td>${ t.status }</td>
+                    <td>${ t.createTime }</td>
+                    <td>${ t.created_at }</td>
                 </tr>
             </tbody>
         </table>
@@ -148,24 +155,41 @@
                     localStorage.setItem('names', this.names);
                     var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum}
                     var url = '/api/trades'
-                    fetch(url, {
-                        method: 'POST', // or 'PUT'
-                        body: JSON.stringify(data), // data can be `string` or {object}!
-                        headers: new Headers({
-                            'Content-Type': 'application/json'
-                        })
-                        }).then(res => res.json())
-                        .catch(error => console.log('Error:', error))
-                        .then(response => {
-                            console.log('Success:', response);
-                            this.init();
-                        });
+                    if (this.names!='') {
+                        fetch(url, {
+                            method: 'POST', // or 'PUT'
+                            body: JSON.stringify(data), // data can be `string` or {object}!
+                            headers: new Headers({
+                                'Content-Type': 'application/json'
+                            })
+                            }).then(res => res.json())
+                            .catch(error => console.log('Error:', error))
+                            .then(response => {
+                                console.log('Success:', response);
+                                this.init();
+                            });
+                    } else {
+                        this.init();
+                    }
                     
                 },
                 reset () {
                     this.cookie = '';
                     this.names = '';
-                }
+                },
+                filterShop (shop_id) {
+                    if (shop_id === '3079394145') {
+                        return '通众旗舰店'
+                    } else if (shop_id == '2933051711') {
+                        return '亿维办公旗舰店'
+                    } else if (shop_id == '925025092') {
+                        return '亿维通众专卖店'
+                    } else if (shop_id == '2829884134') {
+                        return '众泰专营店'
+                    } else if (shop_id == '1584616501') {
+                        return '易加'
+                    }
+                },
             }
         })
         $(function() {
