@@ -21,7 +21,7 @@ memo: 1"""
 params_orders = """auctionType: 0
 close: 0
 pageNum: 1
-pageSize: 100
+pageSize: 30
 queryMore: false
 rxAuditFlag: 0
 rxElectronicAllFlag: 0

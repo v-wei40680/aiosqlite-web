@@ -3,6 +3,7 @@
 {% block title %}紫色{% endblock %}
 
 {% block beforehead %}
+<script src="../static/js/moment-with-locales.js"></script>
     <style>
         body {
             background-color: pink;
@@ -63,6 +64,7 @@
         店铺id：<span v-text='re_shop_id'></span><br>
         <button @click='post_trades'>开始</button>
         <button @click='init'>更新</button>
+        <button @click='orderCreated'>排序</button>
         <span @click="reset">重置</span>
         <!-- </form> -->
         <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
@@ -142,7 +144,7 @@
                     if (!localStorage.getItem('names')) localStorage.setItem('names', '');
                     this.cookie = localStorage.getItem('cookie');
                     this.names = localStorage.getItem('names');
-                    url = '/api/trades'
+                    var url = '/api/trades'
                     fetch(url)
                     .then(resp => resp.json())
                     .then(data => {
@@ -195,8 +197,8 @@
         $(function() {
             setInterval(function () {
                 app.post_trades();
-                console.log('sleep 2 seconds')
-            } , 1000*60*6)
+                console.log(moment().format('YYYY-MM-DD h:mm:ss a'), 'sleep 8 min')
+            }, 1000*60*8)
         })
     </script>
 {% endblock %}

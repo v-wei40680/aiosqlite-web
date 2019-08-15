@@ -1,0 +1,11 @@
+
+<script src="../static/js/jquery.min.js"></script>
+<script src="../static/js/moment-with-locales.js"></script>
+<script>
+$(function() {
+    console.log('start')
+    setInterval(function () {
+        console.log(moment().format('YYYY-MM-DD h:mm:ss a'), 'sleep 6 min')
+    }, 1000*6)
+})
+</script>

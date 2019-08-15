@@ -443,13 +443,20 @@ async def get_api_trades(*, page='1', request):
     page_index = get_page_index(page)
     num = await Flag.findNumber('count(id)')
     p = Page(num, page_index)
-    print(p, page_index)
     if num == 0:
         return dict(page=p, trades=())
     flags = await Flag.findAll(orderBy='createTime desc', limit=(200, p.offset))
-    datas = list(flags)
-    data = dict(page=p, trades=datas)
-    return data
+    return dict(page=p, trades=flags)
+
+@get('/api/trades?o=acs')
+async def get_api_trades_acs(*, page='1', request):
+    page_index = get_page_index(page)
+    num = await Flag.findNumber('count(id)')
+    p = Page(num, page_index)
+    if num == 0:
+        return dict(page=p, trades=())
+    flags = await Flag.findAll(orderBy='created_at desc', limit=(200, p.offset))
+    return dict(page=p, trades=flags)
 
 @post('/api/trades')
 async def api_create_trade(request, *, names, cookie, pageNum):
@@ -457,7 +464,6 @@ async def api_create_trade(request, *, names, cookie, pageNum):
     """
     cs = parse_cookie(cookie)
     shopId = cs['x']
-    print(shopId, names)
     if names != '':
         for name in names.splitlines():
             flag_num = await Flag.findNumber('count(id)', "nick=?", [name])
@@ -468,7 +474,6 @@ async def api_create_trade(request, *, names, cookie, pageNum):
         #logging.info('no names')
         pass
     await update_trade(cs, names, pageNum)
-    return 'names save'
 
 async def update_trade(cs, names, pageNum):
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'

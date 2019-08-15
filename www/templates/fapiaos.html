@@ -128,18 +128,22 @@
                     localStorage.setItem('cookie', this.cookie);
                     var data = {'cookie': this.cookie, 'pageNum': this.pageNum}
                     var url = '/api/fapiaos'
-                    fetch(url, {
-                        method: 'POST', // or 'PUT'
-                        body: JSON.stringify(data), // data can be `string` or {object}!
-                        headers: new Headers({
-                            'Content-Type': 'application/json'
-                        })
-                        }).then(res => res.json())
-                        .catch(error => console.log('Error:', error))
-                        .then(response => {
-                            console.log('Success:', response);
-                            this.init();
-                        });
+                    if (this.cookie!='') {
+                        fetch(url, {
+                            method: 'POST', // or 'PUT'
+                            body: JSON.stringify(data), // data can be `string` or {object}!
+                            headers: new Headers({
+                                'Content-Type': 'application/json'
+                            })
+                            }).then(res => res.json())
+                            .catch(error => console.log('Error:', error))
+                            .then(response => {
+                                console.log('Success:', response);
+                                this.init();
+                            });
+                    } else {
+                        this.init();
+                    }
                     
                 },
                 filterFlag (flag) {
