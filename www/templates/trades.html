@@ -61,7 +61,9 @@
     <div id="app">
         <!-- <form action=""> -->
         输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数" max='10' min='1'><br>
+        <span style="color: red"> 如果是昨天的改一下页数</span><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数" max='10' min='1'>x
+        <input type="number" placeholder="获取订单数" value="15" disabled>共${ pageNum*15 }个订单<br>
         <textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
