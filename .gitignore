@@ -1,6 +1,7 @@
 *.py[cod]
 
 test.db
+Msg.db
 *.db
 test.txt
 sina.html
