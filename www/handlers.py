@@ -449,22 +449,25 @@ async def get_trades(*, request):
 
 @get('/api/trades')
 async def get_api_trades(*, page='1', request):
-    page_index = get_page_index(page)
-    num = Trade.find().count()
-    p = Page(num, page_index)
-    print(p, page_index)
-    if num == 0:
-        return dict(page=p, trades=())
-    trades = Trade.find().sort('created_at', pymongo.DESCENDING).limit(250)
-    datas = list(trades)
-    for x in datas:
-        del x['_id']
-        x['created_at'] = d.strftime(x['created_at'],'%Y-%m-%d %H:%M:%S')
-    data = dict(page=p, trades=datas)
-    return data
+    try:
+        page_index = get_page_index(page)
+        num = Trade.find().count()
+        p = Page(num, page_index)
+        print(p, page_index)
+        if num == 0:
+            return dict(page=p, trades=())
+        trades = Trade.find().sort('created_at', pymongo.DESCENDING).limit(250)
+        datas = list(trades)
+        for x in datas:
+            del x['_id']
+            x['created_at'] = d.strftime(x['created_at'],'%Y-%m-%d %H:%M:%S')
+        data = dict(page=p, trades=datas)
+        return data
+    except:
+        return 'fetch time out'
 
 @post('/api/trades')
-async def api_create_trade(request, *, names, cookie, pageNum, userAgent):
+async def api_create_trade(request, *, names, cookie, pageNum, userAgent, pageSize):
     """
     """
     print('start post trades')
@@ -482,50 +485,55 @@ async def api_create_trade(request, *, names, cookie, pageNum, userAgent):
            Trade.insert_many(trades)
     else:
         pass
-    await update_trade(cs, names, pageNum, userAgent)
+    await update_trade(cs, names, pageNum, userAgent, pageSize)
     return 'names save'
 
-async def update_trade(cs, names, pageNum, userAgent):
+async def update_trade(cs, names, pageNum, userAgent, pageSize):
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
     base_url = 'https://trade.taobao.com'
     headers['user-agent'] = userAgent
-    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers) as session:
-        for page in range(1, int(pageNum)+1):
-            ps['pageNum'] = page
-            print('page', page)
-            if page > 1:
-                ps['prePageNo'] = page - 1
-            async with session.post(url1, data=ps, cookies=cs) as r:
-                datas = await r.text()
-                # print(r.status)
-                datas = json.loads(datas)
-                mainOrders = datas['mainOrders']
-                trades = []
-                for m in mainOrders[:]:
-                    trade = {}
-                    trade['tradeId'] = m['id']
-                    trade['nick'] = nick = m['buyer']['nick']
-                    trade['createTime'] = m['orderInfo']['createTime'] # 下单时间
-                    trade['price'] = m['payInfo']['actualFee']  # 总价格
-                    trade['flag'] = m['extra']['sellerFlag']  # 旗子
-                    trade['status'] = m['statusInfo']['text']  # 交易状态
-                    trade['shop'] = cs['x']
-                    if trade['nick'] in names and trade['flag'] != 5 and (trade['status'] != '交易关闭' or trade['status'] != '等待买家付款'):
-                        'do flag'
-                        url = base_url + m['operations'][0]['dataUrl']
-                        ps1 = get_params(params_flag)
-                        ps1['_tb_token_'] = cs['_tb_token_']
-                        ps1['biz_order_id'] = m['id']
-                        ps1['flag'] = 5
-                        print(url, ps1)
-                        async with session.post(url, data=ps1, cookies=cs) as resp:
-                            print(await r.text())
-                            trade['flag'] = ps1['flag']
-                    condition = {'nick': nick}
-                    Trade.update_one(condition, {'$set': trade})
-                    # print(trade)
-                # Trade.insert_many(trades)
-                # return 'parse trade'
+    try:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers) as session:
+            for page in range(1, int(pageNum)+1):
+                ps['pageNum'] = page
+                ps['pageSize'] = pageSize
+                print('page', page)
+                if page > 1:
+                    ps['prePageNo'] = page - 1
+                async with session.post(url1, data=ps, cookies=cs) as r:
+                    datas = await r.text()
+                    # print(r.status)
+                    datas = json.loads(datas)
+                    mainOrders = datas['mainOrders']
+                    trades = []
+                    for m in mainOrders[:]:
+                        trade = {}
+                        trade['tradeId'] = m['id']
+                        trade['nick'] = nick = m['buyer']['nick']
+                        trade['createTime'] = m['orderInfo']['createTime'] # 下单时间
+                        trade['price'] = m['payInfo']['actualFee']  # 总价格
+                        trade['flag'] = m['extra']['sellerFlag']  # 旗子
+                        trade['status'] = m['statusInfo']['text']  # 交易状态
+                        trade['shop'] = cs['x']
+                        if trade['nick'] in names and trade['flag'] != 5 and (trade['status'] != '交易关闭' or trade['status'] != '等待买家付款'):
+                            'do flag'
+                            url2 = base_url + m['operations'][0]['dataUrl']
+                            ps1 = get_params(params_flag)
+                            ps1['_tb_token_'] = cs['_tb_token_']
+                            ps1['biz_order_id'] = m['id']
+                            ps1['flag'] = 5
+                            print(url2, ps1)
+                            async with session.post(url2, data=ps1, cookies=cs) as resp:
+                                'do flag'
+                                # print(await resp.text())
+                                trade['flag'] = ps1['flag']
+                        condition = {'nick': nick}
+                        Trade.update_one(condition, {'$set': trade})
+                        # print(trade)
+                    # Trade.insert_many(trades)
+                    # return 'parse trade'
+    except:
+        return 'time out'
 
 @get('/fapiaos')
 async def get_fapiaos(*, request):
