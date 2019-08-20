@@ -7,17 +7,15 @@ __author__ = 'Michael Liao'
 
 import re, time, json, logging, hashlib, base64, asyncio
 from datetime import datetime as d
+from bson.objectid import ObjectId
 
 import markdown2
-
 from faker import Faker
-
 import aiohttp
 from aiohttp import web
 
 from coroweb import get, post
 from apis import Page, APIValueError, APIResourceNotFoundError, APIPermissionError
-
 from models import User, Blog, Comment, next_id, Flag
 from config import configs
 
@@ -459,12 +457,12 @@ async def get_api_trades(*, page='1', request):
         trades = Trade.find().sort('created_at', pymongo.DESCENDING).limit(250)
         datas = list(trades)
         for x in datas:
-            del x['_id']
+            x['_id'] = str(x['_id'])
             x['created_at'] = d.strftime(x['created_at'],'%Y-%m-%d %H:%M:%S')
         data = dict(page=p, trades=datas)
         return data
     except:
-        return 'fetch time out'
+        return {'error': 'fetch time out'}
 
 @post('/api/trades')
 async def api_create_trade(request, *, names, cookie, pageNum, userAgent, pageSize):
@@ -487,6 +485,12 @@ async def api_create_trade(request, *, names, cookie, pageNum, userAgent, pageSi
         pass
     await update_trade(cs, names, pageNum, userAgent, pageSize)
     return 'names save'
+
+@post('/api/trades/{_id}/delete')
+async def api_delete_trade(request, *, _id):
+    condition = {'_id': ObjectId(_id)}
+    Trade.delete_one(condition)
+    return dict(_id=_id)
 
 async def update_trade(cs, names, pageNum, userAgent, pageSize):
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'

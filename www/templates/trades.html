@@ -50,10 +50,17 @@
             changeBackgroundColor('.blue', 'lightblue')
         })
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script src="../static/js/vue.js"></script>
 {% endblock %}
 
 {% block content %}
+    {% if error %}
+    <div class="alert alert-warning">
+        <a href="#" class="close" data-dismiss="alert">
+        &times;   </a>
+        <strong>警告！</strong>您的网络连接有问题。
+    </div>
+    {% endif %}
     <div class="point pink"></div>
     <div class="point read"></div>
     <div class="point green"></div>
@@ -93,6 +100,9 @@
                     <td>${ t.status }</td>
                     <td>${ t.createTime }</td>
                     <td>${ t.created_at }</td>
+                    <td>
+                        <button class="btn btn-danger" @click='delete_trade(t._id)'>删除</button>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -111,7 +121,7 @@
                 pageNum: 1,
                 pageSize: 15,
                 fields: ['nick', 'tradeId', 'flag', 'price', 'shop', 'status', 'createTime', 'created_at'],
-                heads: ['旺旺', '订单号', '旗子', '价格', '店铺', '交易状态', '交易时间', '登记时间']
+                heads: ['旺旺', '订单号', '旗子', '价格', '店铺', '交易状态', '交易时间', '登记时间', '操作']
             },
             computed: {
                 re_shop_id () {
@@ -168,7 +178,7 @@
                     var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum, 'userAgent': navigator.userAgent, 'pageSize': this.pageSize}
                     console.log(data)
                     var url = '/api/trades';
-                    if (!this.names.includes('\n' & this.names.length > 100)) {
+                    if (!this.names.includes('\n') && this.names.length > 100) {
                         alert('网名有问题')
                         return
                     }
@@ -189,6 +199,24 @@
                         this.init();
                     }
                     
+                },
+                delete_trade (_id) {
+                    data = {'_id': _id}
+                    var url = '/api/trades/'+ _id + '/delete';
+                    fetch(url, {
+                        method: 'POST', // or 'PUT'
+                        body: JSON.stringify(data),
+                        headers: new Headers({
+                            'Content-Type': 'application/json'
+                        })
+                        }).then(res => res.json())
+                        .catch(error => console.log('Error:', error))
+                        .then(response => {
+                            this.trades = this.trades.filter(res => {
+                                return res._id != _id
+                            })
+                            console.log('Success:', response);
+                        });
                 },
                 reset () {
                     this.cookie = '';
