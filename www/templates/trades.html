@@ -100,12 +100,12 @@
                         </td>
                         <td>${ t.price }</td>
                         <td>
-                            <span v-if="t.wuliu=='物流公司：申通快递 '" style="color: green">
+                            <span v-if="t.wuliu=='物流公司：申通快递 '">
                                 <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
                                     ${ t.wuliu }
                                 </a>
                             </span>
-                            <span v-else>
+                            <span v-else style="background: red">
                                 <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
                                 ${ t.wuliu }
                             </a></span>
