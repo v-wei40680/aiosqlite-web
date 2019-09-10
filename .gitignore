@@ -4,6 +4,8 @@ test.db
 test.txt
 sina.html
 .vscode
+*.log
+
 # C extensions
 *.so
 

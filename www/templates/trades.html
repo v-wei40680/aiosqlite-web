@@ -61,7 +61,10 @@
         订单页数：<input type="number" v-model.trim='pageNum' placeholder="设置页数"><br>
         订单数量：<input type="number" v-model='page_size' placeholder="设置页数"><br>
         标记的备注：<input type="text" v-model.trim='mark'><br>
-        网名：<textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
+        网名：<textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
+        <button @click='clear' id='btn1'>换名</button>
+        <button @click='clear2' id='btn2'>换回来</button>
+        网名第二天：<textarea v-model.trim='names2' name='text' cols="30" rows="10"></textarea>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
         <button class="btn btn-primary" @click='post_trades'>开始</button>
@@ -88,7 +91,7 @@
                 </thead>
                 <tbody>
                     <tr v-for='t in filterItems'>
-                        <td><button class="btn btn-success" @click='kd(t.nick)'>${ t.nick }</button></td>
+                        <td><a class="btn btn-success" @click='kd(t.nick)' href="#">${ t.nick }</a></td>
                         <td>
                             <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">${ t.id }</a></td>
                         <td>
@@ -131,6 +134,8 @@
                 trades: [],
                 search: '',
                 names: '',
+                names2: '',
+                name3: '',
                 mark: '1',
                 cookie: '',
                 pageNum: 1,
@@ -172,13 +177,16 @@
             },
             created () {
                 this.init();
+                $('#btn2').hide()
             },
             methods: {
                 init () {
                     if (!localStorage.getItem('cookie')) localStorage.setItem('cookie', '');
                     if (!localStorage.getItem('names')) localStorage.setItem('names', '');
+                    if (!localStorage.getItem('names2')) localStorage.setItem('names2', '');
                     this.cookie = localStorage.getItem('cookie');
                     this.names = localStorage.getItem('names');
+                    this.names2 = localStorage.getItem('names2');
                     url = '/api/trades'
                     fetch(url+ '?page_size=' + this.page_size)
                     .then(resp => resp.json())
@@ -190,8 +198,8 @@
                 post_trades () {
                     localStorage.setItem('cookie', this.cookie);
                     localStorage.setItem('names', this.names);
-                    var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum, 'memo': this.memo?this.memo:'1'}
-                    // var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum}
+                    localStorage.setItem('names2', this.names2);
+                    var data = {'names': this.names + '\n' + this.names2, 'cookie': this.cookie, 'pageNum': this.pageNum, 'memo': this.memo?this.memo:'1'}
                     var url = '/api/trades'
                     fetch(url, {
                         method: 'POST', // or 'PUT'
@@ -246,6 +254,20 @@
                     var re = /x=(\w+)/;
                     var a = re.exec(this.cookie);
                     return a[1]
+                },
+                clear () {
+                    this.names3 = this.names
+                    this.names = this.names2
+                    this.names2 = ''
+                    $('#btn1').hide()
+                    $('#btn2').show()
+                },
+                clear2 () {
+                    this.names2 = this.names
+                    this.names = this.names3
+                    this.name3 = ''
+                    $('#btn2').hide()
+                    $('#btn1').show()
                 }
             }
         })
