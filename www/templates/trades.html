@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'dash.html' %}
 
 {% block title %}紫色{% endblock %}
 
@@ -37,16 +37,18 @@
         function changeBackgroundColor(cl, color) {
             $(cl).click(function () {
                 $('body').css('background', color)
+                localStorage.setItem('color', color)
             })
         }
         $(function () {
+            var color = localStorage.getItem('color');
+            $('body').css('background', color);
             changeBackgroundColor('.pink', 'pink');
             changeBackgroundColor('.read', '#CCE8CF')
             changeBackgroundColor('.green', 'yellowgreen')
             changeBackgroundColor('.blue', 'lightblue')
         })
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
 {% endblock %}
 
 {% block content %}
@@ -55,29 +57,69 @@
     <div class="point green"></div>
     <div class="point blue"></div>
     <div id="app">
-        <!-- <form action=""> -->
-        输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
-        <textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
+        输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie"><br>
+        订单页数：<input type="number" v-model.trim='pageNum' placeholder="设置页数"><br>
+        订单数量：<input type="number" v-model='page_size' placeholder="设置页数"><br>
+        标记的备注：<input type="text" v-model.trim='mark'><br>
+        网名：<textarea v-model='names' name='text' id="" cols="30" rows="10"></textarea>
         <br>
         店铺id：<span v-text='re_shop_id'></span><br>
-        <button @click='post_trades'>开始</button>
-        <button @click='init'>更新</button>
-        <span @click="reset">重置</span>
-        <!-- </form> -->
-        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th v-for='h in heads'>${ h }</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for='t in filterItems'>
-                    <td  v-for='f in fields'>${ t[f] }</td>
-                </tr>
-            </tbody>
-        </table>
+        <button class="btn btn-primary" @click='post_trades'>开始</button>
+        <button class="btn btn-success" @click='init'>更新</button>
+        <button @click="reset">重置</button>
+        <button @click='kd("关闭")'>关闭</button>
+        <button @click='kd("申通")'>申通</button>
+        <button @click='kd("韵达")'>韵达</button>
+        <button @click='kd("百世")'>百世</button>
+        <button @click='kd("顺丰")'>顺丰</button>
+        <button @click='kd("邮政")'>邮政</button>
+        <button @click='kd("2933051711")'>亿维办公</button>
+        <button @click='kd("925025092")'>亿维专卖店</button>
+        <button @click='kd("3079394145")'>通众旗舰店</button>
+        <button @click='kd("1584616501")'>易加</button>
+        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
+        <button class="btn btn-danger" @click='kd("")'>清空</button>
+        <div class="table-responsive">
+            <table class="table ">
+                <thead>
+                    <tr>
+                        <th v-for='h in heads'>${ h }</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for='t in filterItems'>
+                        <td><button class="btn btn-success" @click='kd(t.nick)'>${ t.nick }</button></td>
+                        <td>
+                            <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">${ t.id }</a></td>
+                        <td>
+                            <span v-if="t.flag==5" style="color: purple">${ t.flag }</span>
+                            <span v-else>${ t.flag }</span>
+                        </td>
+                        <td>${ t.price }</td>
+                        <td>
+                            <span v-if="t.wuliu=='物流公司：申通快递 '" style="color: green">
+                                <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
+                                    ${ t.wuliu }
+                                </a>
+                            </span>
+                            <span v-else>
+                                <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
+                                ${ t.wuliu }
+                            </a></span>
+                        </td>
+                        <td>${ filterShop(t.shop) }</td>
+                        <td>
+                            <span v-if="t.status=='交易关闭'" style="background: red">${ t.status }</span>
+                            <span v-else>${ t.status }</span>
+                        </td>
+                        <td>${ t.createTime }</td>
+                        <td>
+                            <button class="btn btn-danger" @click="del_trade(t)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
 
@@ -89,10 +131,12 @@
                 trades: [],
                 search: '',
                 names: '',
+                mark: '1',
                 cookie: '',
                 pageNum: 1,
-                fields: ['nick', 'tradeId', 'flag', 'price', 'shop', 'status', 'createTime', 'created_at'],
-                heads: ['旺旺', '订单号', '旗子', '价格', '店铺', '交易状态', '交易时间', '登记时间']
+                page_size: 200,
+                fields: ['nick', 'id', 'flag', 'price', 'wuliu', 'shop', 'status', 'createTime'],
+                heads: ['旺旺', '订单号', '旗子', '价格', '物流', '店铺', '交易状态', '交易时间', '操作']
             },
             computed: {
                 re_shop_id () {
@@ -122,7 +166,7 @@
                         function fi(key) {
                             return item[key].match(self.search)
                         }
-                        return fi('tradeId') || fi('price') || fi('nick') || fi('createTime') || fi('shop');
+                        return fi('id') || fi('price') || fi('nick') || fi('wuliu') || fi('createTime') || fi('status') || fi('shop');
                     });
                 }
             },
@@ -136,7 +180,7 @@
                     this.cookie = localStorage.getItem('cookie');
                     this.names = localStorage.getItem('names');
                     url = '/api/trades'
-                    fetch(url)
+                    fetch(url+ '?page_size=' + this.page_size)
                     .then(resp => resp.json())
                     .then(data => {
                         this.trades = data.trades;
@@ -146,7 +190,8 @@
                 post_trades () {
                     localStorage.setItem('cookie', this.cookie);
                     localStorage.setItem('names', this.names);
-                    var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum}
+                    var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum, 'memo': this.memo?this.memo:'1'}
+                    // var data = {'names': this.names, 'cookie': this.cookie, 'pageNum': this.pageNum}
                     var url = '/api/trades'
                     fetch(url, {
                         method: 'POST', // or 'PUT'
@@ -165,15 +210,55 @@
                 reset () {
                     this.cookie = '';
                     this.names = '';
+                },
+                filterShop (shop_id) {
+                    if (shop_id === '3079394145') {
+                        return '通众旗舰店'
+                    } else if (shop_id == '2933051711') {
+                        return '亿维办公旗舰店'
+                    } else if (shop_id == '925025092') {
+                        return '亿维通众专卖店'
+                    } else if (shop_id == '2829884134') {
+                        return '众泰专营店'
+                    } else if (shop_id == '1584616501') {
+                        return '易加'
+                    }
+                },
+                kd(kd) {
+                    this.search = kd
+                },
+                del_trade(trade) {
+                    var data = {id: trade.id}
+                    fetch('/api/trades/' + trade.id + '/delete', {
+                        method: 'POST',
+                        headers: new Headers({
+                            'Content-Type': 'application/json'
+                        })
+                    }).then(res => res.json())
+                    .catch(error => console.log('Error:', error))
+                    .then(response => {
+                        this.trades = this.trades.filter(trade => {
+                            return trade.id != response.id;
+                        })
+                    });
+                },
+                parse_shop_id () {
+                    var re = /x=(\w+)/;
+                    var a = re.exec(this.cookie);
+                    return a[1]
                 }
             }
         })
-        // $(function() {
-        //     setInterval(function () {
-        //         app.post_trades();
-        //         console.log('sleep 2 seconds')
-        //     } , 1000*60*6)
-        // })
+        $(function() {
+            setInterval(function () {
+                var now = new Date();
+                var hour = now.getHours();
+                if (hour < 24 & hour > 9) {
+                    app.post_trades();
+                    console.log('sleep 9 min')
+                }
+            } , 1000*60*9)
+        })
     </script>
 {% endblock %}
 

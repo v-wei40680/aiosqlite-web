@@ -45,8 +45,6 @@ def get_params(params):
         ps[p.split(': ')[0]] = p.split(': ')[1]
     return ps
 
-# ck = "everywhere_tool_welcome=true; t=14311ec3aafd57dfeca9dc34db942c41; cna=KCpgFVcUJk8CAXFKK1gjY3ek; enc=CtFfr8LBwjjXreQlTADOdArmNTekIb0xzybQzWE%2FRjQspBO3b1UMgqwbmnmfLar6ilL6puchfnk8Glu39BFbJA%3D%3D; ali_ab=113.74.43.88.1557741049564.1; _bl_uid=hdjd5v2hnw8eX3mdC85hweyzvhqz; thw=cn; uc3=id2=&nk2=&lg2=; tracknick=; UM_distinctid=16bd4cb224a1b4-05dc9baf7a5373-e343166-1fa400-16bd4cb224bbdf; _m_h5_tk=f0a3a923c8a327a2aec68dbaf20ae75c_1563523082128; _m_h5_tk_enc=f540490628d54f52dac5fd4c6b11733f; cookie2=109c250314a382950d517b2e7fabe956; _tb_token_=3e77883d14f3e; x=2829884134; sn=%E4%BC%97%E6%B3%B0%E5%8A%9E%E5%85%AC%E4%B8%93%E8%90%A5%E5%BA%97%3A%E8%8F%9C%E9%B8%9F; unb=4102789044; skt=00aa87e7ca72b5d6; csg=0a5971ad; v=0; uc1=cookie14=UoTaG7jbMp%2B87Q%3D%3D&lng=zh_CN; l=cBQuNRCVvWHF_Q0wKOCwlurza77tkIRfguPzaNbMi_5Z-1T1JI_Ok4_JLe96cjWFTkTB4k6UXwetneVU8yDbTH_7iaxp3p1..; isg=BHh4kqHoUe5vZryGXvIb6y2ZSSbKSdxnLrb3dLLpvLNmzRm3WvDA-iarhYVYnZRD"
-
 def parse_cookie(ck):
     cs = {}
     for c in ck.split('; '):
@@ -58,10 +56,6 @@ headers = {
     'referer': 'https://trade.taobao.com'
 }
 
-import pymongo
+cookie = "everywhere_tool_welcome=true; miniDialog=true; mt=ci%3D-1_0; _bl_uid=knje0vX4lRXymjr8tpemtww55Rns; ali_ab=113.74.43.105.1557732791874.8; enc=JRh3CHLmqooFzdItIeCFErIMEKS0Gsy9SpTMiMKWQFiKq9O%2Fvf22OggT2T2ZH8Ib4WMj6kp3fW5umG5NcyCwIA%3D%3D; thw=cn; t=19dd46e488263b6ab9575c77205aecf6; _m_h5_tk=ec824b3367bfbccafeeebe140f35d3c8_1567417135652; _m_h5_tk_enc=9708958f8ed60e657828a79dc7184ac0; cookie2=1ce9d309a2b20350e1dafd4809d04b37; _tb_token_=3333777065a3b; x=3079394145; unb=4094468737; sn=%E9%80%9A%E4%BC%97%E6%97%97%E8%88%B0%E5%BA%97%3A%E8%8F%9C%E9%B8%9F; csg=a538d859; skt=365805d868227b70; cna=xLXTFaXAT2sCAXFKKEON3jQl; v=0; uc1=cookie14=UoTaH0Azs39Vrg%3D%3D&lng=zh_CN; l=cBEBQubmqFISeePvKOfZlurza77t0IOb8sPzaNbMiICPO2165ZR1WZUXilTBCnGVLsO2R3yE78S3BWL39yznhW-CPSbkvKJC.; isg=BMrKpOiAo3TCSy_B_eNEL4Q-G7C_Zk4VY1uHNVQCYZ2oB2vBPEqtJLo1FzN-98at"
 
-uri = ''
-# uri
-client = pymongo.MongoClient()
-db = client.goods
-
+cs = parse_cookie(cookie)
