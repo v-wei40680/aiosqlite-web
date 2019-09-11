@@ -86,6 +86,9 @@
             fields: ['nick', 'id', 'flag', 'price', 'shop', 'status', 'mark', 'msg', 'createTime'],
         },
         computed: {
+            parse_cookie () {
+                return this.cookie.substring(0,8)=="cookie: "?this.cookie.split("cookie: ")[1]:this.cookie;
+            },
             re_shop_id () {
                 if (this.cookie!='') {
                     var re = /x=(\w+)/;
@@ -149,7 +152,7 @@
             },
             post_trades () {
                 localStorage.setItem('cookie', this.cookie);
-                var data = {'cookie': this.cookie, 'pageNum': this.pageNum}
+                var data = {'cookie': this.parse_cookie, 'pageNum': this.pageNum}
                 var url = '/api/fapiaos'
                 fetch(url, {
                     method: 'POST', // or 'PUT'

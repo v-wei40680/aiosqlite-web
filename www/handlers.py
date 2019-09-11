@@ -111,28 +111,33 @@ async def api_create_trade(request, *, names, cookie, pageNum, memo='1'):
                         async with session.post(url, data=ps1) as resp:
                             print(await resp.text())
                             flag = ps1['flag']
+                    
+                    num = await Trade.findNumber('count(id)', "id=?", [tradeId,]) 
+                    if num == 1:  
+                        trade = await Trade.find(tradeId)
+                        print('status', status, trade.status)
+                        if trade.status != status:
+                            trade.status = status
+                            await trade.update()
                     if nick in names:
                         trade = Trade(id=tradeId, createTime=createTime, price=price, nick=nick, flag=flag, status=status, shop=shop)
                         num = await Trade.findNumber('count(id)', "id=?", [tradeId,])
                         print("nums: ", num)
                         if num == 0:
                             await trade.save()
-                        elif num == 1 and (status == '卖家已发货' or status == '交易成功'):
-                            url_wuliu = 'https:' + m['payInfo']['operations'][0]['url']
+                        elif num == 1:
                             trade = await Trade.find(tradeId)
-                            print('status', status, trade.status)
-                            if trade.status != status:
-                                trade.status = status
-                                await trade.update()
-                            print(trade, "wuliu :" , trade.wuliu, )
-                            if trade.wuliu == "":
-                                async with session.get(url_wuliu) as r:
-                                    info = await r.text()
-                                    doc = pq(info)
-                                    wuliu = doc('#J_NormalLogistics p').text()
-                                    trade.wuliu = wuliu
-                                    print(wuliu)
-                                    await trade.update()
+                            if status == '卖家已发货' or status == '交易成功':
+                                url_wuliu = 'https:' + m['payInfo']['operations'][0]['url']
+                                print(trade, "wuliu :" , trade.wuliu, )
+                                if trade.wuliu == "":
+                                    async with session.get(url_wuliu) as r:
+                                        info = await r.text()
+                                        doc = pq(info)
+                                        wuliu = doc('#J_NormalLogistics p').text()
+                                        trade.wuliu = wuliu
+                                        print(wuliu)
+                                        await trade.update()
 
 @post('/api/trades/{id}/delete')
 async def api_delete_trades(id, request):
