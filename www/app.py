@@ -10,11 +10,15 @@ async web application.
 from datetime import datetime
 import logging; 
 
+"""
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                     datefmt='%a, %d %b %Y %H:%M:%S',
                     filename='test.log',
-                    filemode='a')
+                    filemode='a')"""
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S')
 
 import asyncio, os, json, time
 # import uvloop

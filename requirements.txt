@@ -4,4 +4,5 @@ faker
 aiosqlite3
 gunicorn
 watchdog
+pyquery
 # uvloop

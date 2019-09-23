@@ -57,10 +57,15 @@
     <div class="point green"></div>
     <div class="point blue"></div>
     <div id="app">
-        输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie"><br>
-        订单页数：<input type="number" v-model.trim='pageNum' placeholder="设置页数"><br>
-        订单数量：<input type="number" v-model='page_size' placeholder="设置页数"><br>
-        标记的备注：<input type="text" v-model.trim='mark'><br>
+        输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie">
+        <button @click="reset1()">重置</button><br>
+        订单页数：<input type="number" v-model.trim='pageNum' placeholder="设置页数">
+        从：<input type="date" v-model="start">到：<input type="date" v-model="end">
+        <input type="datetime-local" v-model='test'>
+        <br>
+        订单数量：<input type="number" v-model='page_size' placeholder="设置页数">
+        <br>
+        标记的备注：<input type="text" v-model.trim='memo'><br>
         网名：<textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
         <button @click='clear' id='btn1'>换名</button>
         <button @click='clear2' id='btn2'>换回来</button>
@@ -69,7 +74,7 @@
         店铺id：<span v-text='re_shop_id'></span><br>
         <button class="btn btn-primary" @click='post_trades'>开始</button>
         <button class="btn btn-success" @click='init'>更新</button>
-        <button @click="reset">重置</button>
+        <button @click="reset()">重置</button>
         <button @click='kd("关闭")'>关闭</button>
         <button @click='kd("申通")'>申通</button>
         <button @click='kd("韵达")'>韵达</button>
@@ -80,7 +85,7 @@
         <button @click='kd("925025092")'>亿维专卖店</button>
         <button @click='kd("3079394145")'>通众旗舰店</button>
         <button @click='kd("1584616501")'>易加</button>
-        <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
+        <input type="search" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
         <button class="btn btn-danger" @click='kd("")'>清空</button>
         <div class="table-responsive">
             <table class="table ">
@@ -91,7 +96,7 @@
                 </thead>
                 <tbody>
                     <tr v-for='t in filterItems'>
-                        <td><a class="btn btn-success btn-sm" @click='kd(t.nick)' href="#">${ t.nick }</a></td>
+                        <td><span @click='kd(t.nick)'>${ t.nick }</span></td>
                         <td>
                             <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">${ t.id }</a></td>
                         <td>
@@ -136,8 +141,11 @@
                 names: '',
                 names2: '',
                 name3: '',
-                mark: '1',
+                memo: '',
                 cookie: '',
+                start: '',
+                end: '',
+                test: '',
                 pageNum: 1,
                 page_size: 200,
                 fields: ['nick', 'id', 'flag', 'price', 'wuliu', 'shop', 'status', 'createTime'],
@@ -180,6 +188,13 @@
             },
             created () {
                 this.init();
+                var now = new Date();
+                function convert_time (s) {
+                    return s>9?s:'0'+s
+                }
+                var ct = now.getFullYear() + '-' + convert_time(now.getMonth() + 1) + '-' + convert_time(now.getDate()-1)
+                this.start = ct
+                this.end = now.getFullYear() + '-' + convert_time(now.getMonth() + 1) + '-' + convert_time(now.getDate()+1)
                 $('#btn2').hide()
             },
             methods: {
@@ -202,25 +217,34 @@
                     localStorage.setItem('cookie', this.cookie);
                     localStorage.setItem('names', this.names);
                     localStorage.setItem('names2', this.names2);
-                    var data = {'names': this.names + '\n' + this.names2, 'cookie': this.parse_cookie, 'pageNum': this.pageNum, 'memo': this.memo?this.memo:'1'}
+                    var data = {'names': this.names + '\n' + this.names2, 
+                        'cookie': this.parse_cookie, 'pageNum': this.pageNum,
+                        'memo': this.memo,
+                        'start': this.start, 'end': this.end
+                        }
                     var url = '/api/trades'
-                    fetch(url, {
-                        method: 'POST', // or 'PUT'
-                        body: JSON.stringify(data), // data can be `string` or {object}!
-                        headers: new Headers({
-                            'Content-Type': 'application/json'
-                        })
-                        }).then(res => res.json())
-                        .catch(error => console.log('Error:', error))
-                        .then(response => {
-                            console.log('Success:', response);
-                            this.init();
-                        });
-                    
+                    if (this.cookie!='' & (this.names!='' | this.names2!='')) {
+                        fetch(url, {
+                            method: 'POST', // or 'PUT'
+                            body: JSON.stringify(data), // data can be `string` or {object}!
+                            headers: new Headers({
+                                'Content-Type': 'application/json'
+                            })
+                            }).then(res => res.json())
+                            .catch(error => console.log('Error:', error))
+                            .then(response => {
+                                console.log('Success:', response);
+                                this.init();
+                            });
+                    } else {
+                        this.init();
+                    }
                 },
                 reset () {
-                    this.cookie = '';
                     this.names = '';
+                },
+                reset1 () {
+                    this.cookie = '';
                 },
                 filterShop (shop_id) {
                     if (shop_id === '3079394145') {
@@ -282,7 +306,7 @@
                     app.post_trades();
                     console.log('sleep 9 min')
                 }
-            } , 1000*60*9)
+            } , parseInt(1000*60*(Math.random()+9)))
         })
     </script>
 {% endblock %}

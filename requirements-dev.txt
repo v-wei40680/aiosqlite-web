@@ -1,7 +1,0 @@
-aiohttp
-jinja2
-aiopg
-psycopg2-binary
-watchdog
-gunicorn
-uvloop

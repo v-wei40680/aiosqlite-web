@@ -8,6 +8,7 @@
     输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
     订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
     订单数量：<input type="number" v-model='page_size' placeholder="设置页数"><br>
+    标记的备注：<input type="text" v-model.trim='memo'><br>
     <ul v-for="c in shop_cookies">
         <li>
             <span v-if="c.updated_at">
@@ -28,7 +29,7 @@
     <button @click='kd("发票")'>发票</button>
     <button @click='kd("专票")'>专票</button>
     <button @click='kd("收据")'>收据</button>
-    <input type="text" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search" autofocus>
+    <input type="search" class="form-control mt-3 mb-3" placeholder="筛选" v-model="search" autofocus>
     去掉空格<input type="text" v-model='blank'>
     ${ fp }
     <table class="table">
@@ -73,6 +74,7 @@
             shop_cookies: [],
             search: '',
             cookie: '',
+            memo: '',
             pageNum: 1,
             page_size: 1000,
             blank: '',
