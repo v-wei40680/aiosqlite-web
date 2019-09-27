@@ -11,7 +11,6 @@ from datetime import datetime as d
 import aiohttp
 from aiohttp import web
 from pyquery import PyQuery as pq
-from retrying import retry
 
 from coroweb import get, post
 from apis import Page, APIValueError, APIResourceNotFoundError, APIPermissionError
@@ -61,7 +60,8 @@ async def get_api_trades(*, page='1', request, page_size='200'):
 
 async def save_or_update_cookie(shopId, cookie):
     shop_cookie = Cookie(id=shopId, cookie_str=cookie)
-    if await Cookie.findNumber('count(id)', "id=?", [shopId,]) == 0:
+    num = await Cookie.findNumber('count(id)', "id=?", [shopId,])
+    if num == 0:
         await shop_cookie.save()
     else:
         shop_cookie = await Cookie.find(shopId)
@@ -70,7 +70,59 @@ async def save_or_update_cookie(shopId, cookie):
             shop_cookie.updated_at = time.time()
             await shop_cookie.update()
 
-@retry(stop_max_attempt_number=5)
+async def fetch(session, url1, cs, names):
+    async with session.post(url1, data=ps) as r:
+        # 从天猫后台获取订单
+        datas = await r.text()
+        datas = json.loads(datas)
+        for m in datas['mainOrders']:
+            nick = m['buyer']['nick']
+            tradeId = m['id']
+            createTime = m['orderInfo']['createTime'] # 下单时间
+            price = m['payInfo']['actualFee']  # 总价格
+            flag = m['extra']['sellerFlag']  # 旗子
+            status = m['statusInfo']['text']  # 交易状态
+            shop = cs['x']
+            if nick in names and flag != 5 and (status != '交易关闭' and status != '等待买家付款'):
+                'do flag'
+                url = base_url + m['operations'][0]['dataUrl']
+                ps1 = get_params(params_flag)
+                ps1['_tb_token_'] = cs['_tb_token_']
+                ps1['biz_order_id'] = m['id']
+                ps1['flag'] = 5
+                ps1['memo'] = memo
+                print(url, ps1)
+                async with session.post(url, data=ps1) as resp:
+                    # print(await resp.text())
+                    flag = ps1['flag']
+            num = await Trade.findNumber('count(id)', "id=?", [tradeId,]) 
+            if nick in names:
+                trade = Trade(id=tradeId, createTime=createTime, price=price, nick=nick, flag=flag, status=status, shop=shop)
+                print("nums: ", num)
+                if num == 0:
+                    await trade.save()
+            
+            if num == 1:  
+                trade = await Trade.find(tradeId)
+                print('status', status, trade.status)
+                if trade.flag != flag:
+                    trade.flag = flag
+                    await trade.update()
+                if trade.status != status:
+                    trade.status = status
+                    await trade.update()
+                if status == '卖家已发货' or status == '交易成功':
+                    url_wuliu = 'https:' + m['payInfo']['operations'][0]['url']
+                    print(trade, "wuliu :" , trade.wuliu, )
+                    if trade.wuliu == "":
+                        async with session.get(url_wuliu) as r:
+                            info = await r.text()
+                            doc = pq(info)
+                            wuliu = doc('#J_NormalLogistics p').text()
+                            trade.wuliu = wuliu
+                            print(wuliu)
+                            await trade.update()
+                 
 @post('/api/trades')
 async def api_create_trade(request, *, names, cookie, pageNum, memo='', start='', end=''):
     """
@@ -90,58 +142,8 @@ async def api_create_trade(request, *, names, cookie, pageNum, memo='', start=''
             print('page', page)
             if page > 1:
                 ps['prePageNo'] = page - 1
-            async with session.post(url1, data=ps) as r:
-                # 从天猫后台获取订单
-                datas = await r.text()
-                datas = json.loads(datas)
-                for m in datas['mainOrders']:
-                    nick = m['buyer']['nick']
-                    tradeId = m['id']
-                    createTime = m['orderInfo']['createTime'] # 下单时间
-                    price = m['payInfo']['actualFee']  # 总价格
-                    flag = m['extra']['sellerFlag']  # 旗子
-                    status = m['statusInfo']['text']  # 交易状态
-                    shop = cs['x']
-                    if nick in names and flag != 5 and (status != '交易关闭' and status != '等待买家付款'):
-                        'do flag'
-                        url = base_url + m['operations'][0]['dataUrl']
-                        ps1 = get_params(params_flag)
-                        ps1['_tb_token_'] = cs['_tb_token_']
-                        ps1['biz_order_id'] = m['id']
-                        ps1['flag'] = 5
-                        ps1['memo'] = memo
-                        print(url, ps1)
-                        async with session.post(url, data=ps1) as resp:
-                            # print(await resp.text())
-                            flag = ps1['flag']
-                    num = await Trade.findNumber('count(id)', "id=?", [tradeId,]) 
-                    if nick in names:
-                        trade = Trade(id=tradeId, createTime=createTime, price=price, nick=nick, flag=flag, status=status, shop=shop)
-                        print("nums: ", num)
-                        if num == 0:
-                            await trade.save()
-                    
-                    if num == 1:  
-                        trade = await Trade.find(tradeId)
-                        print('status', status, trade.status)
-                        if trade.flag != flag:
-                            trade.flag = flag
-                            await trade.update()
-                        if trade.status != status:
-                            trade.status = status
-                            await trade.update()
-                        if status == '卖家已发货' or status == '交易成功':
-                            url_wuliu = 'https:' + m['payInfo']['operations'][0]['url']
-                            print(trade, "wuliu :" , trade.wuliu, )
-                            if trade.wuliu == "":
-                                async with session.get(url_wuliu) as r:
-                                    info = await r.text()
-                                    doc = pq(info)
-                                    wuliu = doc('#J_NormalLogistics p').text()
-                                    trade.wuliu = wuliu
-                                    print(wuliu)
-                                    await trade.update()
-                        
+            await fetch(session, url1, cs, names)
+                   
 
 @post('/api/trades/{id}/delete')
 async def api_delete_trades(id, request):
