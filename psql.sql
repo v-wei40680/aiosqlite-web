@@ -29,3 +29,12 @@ created_at float8 not null,
 updated_at float8,
 cookie_str varchar(50) not null
 );
+
+create table if not exists todos (
+id varchar(50) not null primary key,
+itemId varchar(50),
+task varchar(500) not null,
+kw varchar(50),
+created_at float8 not null,
+updated_at float8
+);

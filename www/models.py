@@ -12,7 +12,7 @@ import time, uuid
 from orm import Model, StringField, BooleanField, FloatField, TextField, IntegerField
 
 def next_id():
-    return str(int(time.time() * 1000))
+    return '%015d%s000' % (int(time.time() * 1000), uuid.uuid4().hex)
 
 class Trade(Model):
     __table__ = 'trades'
@@ -45,3 +45,12 @@ class Cookie(Model):
     cookie_str = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
     updated_at = FloatField()
+
+class Todo(Model):
+    __table__ = 'todos'
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    itemId = StringField(ddl='varchar(50)')
+    task = StringField(ddl='varchar(500)')
+    kw = StringField(ddl='varchar(50)')
+    created_at = FloatField(default=time.time)
+    updated_at = FloatField(default=time.time)

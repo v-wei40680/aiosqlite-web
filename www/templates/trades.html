@@ -263,7 +263,6 @@
                     this.search = kd
                 },
                 del_trade(trade) {
-                    var data = {id: trade.id}
                     fetch('/api/trades/' + trade.id + '/delete', {
                         method: 'POST',
                         headers: new Headers({

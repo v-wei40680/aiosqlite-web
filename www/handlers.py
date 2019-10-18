@@ -14,7 +14,7 @@ from pyquery import PyQuery as pq
 
 from coroweb import get, post
 from apis import Page, APIValueError, APIResourceNotFoundError, APIPermissionError
-from models import next_id, Trade, FaPiao, Cookie
+from models import next_id, Trade, FaPiao, Cookie, Todo
 from config import configs
 from flag import parse_cookie, headers, get_params, params_orders, params_flag
 
@@ -70,6 +70,28 @@ async def save_or_update_cookie(shopId, cookie):
             shop_cookie.updated_at = time.time()
             await shop_cookie.update()
 
+async def get_tb_trades(cookie, pageNum, start='', end=''):
+    cs = parse_cookie(cookie)
+    shopId = cs['x']
+    await save_or_update_cookie(shopId, cookie)
+    url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
+    async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers, cookies=cs) as session:
+        for page in range(1, int(pageNum)+1):
+            ps['pageNum'] = page
+            ps['dateBegin'] = str(int(d.timestamp(d.strptime(start, '%Y-%m-%d'))*1000))
+            endtime = int(d.timestamp(d.strptime(end, '%Y-%m-%d'))*1000)
+            if endtime > time.time() * 1000:
+                ps['dateEnd'] = str(int(time.time() * 1000))
+            else:
+                ps['dateEnd'] = str(endtime)
+            print('page', page, 'end', ps['dateEnd'])
+            if page > 1:
+                ps['prePageNo'] = page - 1
+            async with session.post(url1, data=ps) as r:
+                # 从天猫后台获取订单
+                datas = await r.text()
+                return json.loads(datas)['mainOrders']
+
 async def fetch(session, url1, cs, names):
     async with session.post(url1, data=ps) as r:
         # 从天猫后台获取订单
@@ -83,7 +105,40 @@ async def fetch(session, url1, cs, names):
             flag = m['extra']['sellerFlag']  # 旗子
             status = m['statusInfo']['text']  # 交易状态
             shop = cs['x']
-            if nick in names and flag != 5 and (status != '交易关闭' and status != '等待买家付款'):
+            o = m['buyer']['operations']
+            num = await FaPiao.findNumber('count(id)', "id=?", [tradeId,])
+            if num == 0:
+                if len(m['operations'][0].keys()) == 7 and flag != 5:
+                    # 有备注
+                    mark_url = base_url+ m['operations'][0]['dataUrl']
+                    async with session.get(mark_url) as r:
+                        mark = await r.text()
+                        mark = json.loads(mark)['tip']
+                else:
+                    mark = ''
+                if len(o) > 1:
+                    # 有留言
+                    try:
+                        msg_url = base_url + o[1]['dataUrl']
+                        async with session.get(msg_url) as r:
+                            msg = await r.text()
+                            msg = json.loads(msg)['tip']
+                            print(msg)
+                    except KeyError as e:
+                        msg = ''
+                        print(e)
+                else:
+                    msg = ''
+            fapiao = FaPiao(nick=nick, shop=cs['x'], id=tradeId, status=status, createTime=createTime, price=price, flag=flag, mark=mark, msg=msg)
+            if num == 0:
+                await fapiao.save()
+            elif num == 1:
+                fapiao = await FaPiao.find(tradeId)
+                fapiao.status = status
+                fapiao.flag = flag
+                fapiao.mark = mark
+                await fapiao.update()
+            if nick.lower() in names and flag != 5 and (status != '交易关闭' and status != '等待买家付款'):
                 'do flag'
                 url = base_url + m['operations'][0]['dataUrl']
                 ps1 = get_params(params_flag)
@@ -95,8 +150,8 @@ async def fetch(session, url1, cs, names):
                 async with session.post(url, data=ps1) as resp:
                     # print(await resp.text())
                     flag = ps1['flag']
-            num = await Trade.findNumber('count(id)', "id=?", [tradeId,]) 
-            if nick in names:
+            num = await Trade.findNumber('count(id)', "id=?", [tradeId,])
+            if nick.lower() in names:
                 trade = Trade(id=tradeId, createTime=createTime, price=price, nick=nick, flag=flag, status=status, shop=shop)
                 print("nums: ", num)
                 if num == 0:
@@ -133,6 +188,7 @@ async def api_create_trade(request, *, names, cookie, pageNum, memo='', start=''
     await save_or_update_cookie(shopId, cookie)
     print(shopId, names)
     names = names.split('\n')
+    names = [x.lower() for x in names]
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers, cookies=cs) as session:
         for page in range(1, int(pageNum)+1):
@@ -231,3 +287,47 @@ async def do_flag_and_mark(cs, shopId, ):
     async with session.post(url, data=ps1) as resp:
         # print(await resp.text())
         flag = ps1['flag']
+
+@get('/todos')
+def get_todos(request):
+    return {
+        '__template__': 'todos.html',
+    }
+
+@get('/api/todos')
+async def get_api_todos(*, page='1', request, page_size='100'):
+    page_index = get_page_index(page)
+    num = await Todo.findNumber('count(id)')
+    p = Page(num, page_index)
+    print(p, page_index)
+    todos = await Todo.findAll()
+    if num == 0:
+        return dict(page=p, todos=())
+    todos = await Todo.findAll(orderBy='created_at desc', limit=(page_size, p.offset))
+    return dict(page=p, todos=todos)
+
+@post('/api/todos')
+async def api_create_todo(request, *, itemId, kw, task):
+    if not task or not task.strip():
+        raise APIValueError('task', 'task cannot be empty.')
+    todo = Todo(itemId=itemId.strip(), task=task.strip(), kw=kw.strip())
+    await todo.save()
+    return todo
+
+@post('/api/todos/{id}/delete')
+async def api_delete_todo(id, request):
+    todo = await Todo.find(id)
+    await todo.remove()
+    return dict(id=id)
+
+@post('/api/todos/{id}')
+async def api_update_todo(id, request, *, itemId, kw, task):
+    todo = await Todo.find(id)
+    if not task or not task.strip():
+        raise APIValueError('task', 'task cannot be empty.')
+    todo.itemId = itemId.strip()
+    todo.task = task.strip()
+    todo.kw = kw.strip()
+    todo.updated_at = time.time()
+    await todo.update()
+    return todo
