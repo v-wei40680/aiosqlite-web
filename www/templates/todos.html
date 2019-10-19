@@ -1,0 +1,129 @@
+{% extends 'dash.html' %}
+
+{% block title %}任务管理{% endblock %}
+
+{% block content %}
+<div id="app">
+    <button @click='kd("修改商家编码")'>修改商家编码</button>
+    <button @click='kd("添加商家编码")'>添加商家编码</button>
+    <button @click='kd("修改sku")'>修改sku</button>
+    <button @click='kd("复制链接到亿维办公与众泰")'>复制链接到亿维办公与众泰</button>
+    <button @click='kd("修改价格")'>修改价格</button>
+    <button @click='kd("复制链接到通众旗舰店")'>复制链接到通众旗舰店</button>
+    <button @click='kd("复制链接到易加")'>复制链接到易加</button>
+    <form id="form" v-on:submit.prevent="new_todo">
+        链接：<input type="url" v-model.trim="todo.url">
+        关键字：<input type="text" v-model.trim="todo.kw">
+        做什么：<input type="text" v-model.trim="todo.task" required="required">
+        <input class="btn btn-primary" type="submit" value="添加">
+    </form>
+    <div class="table-responsive">
+        <table class="table ">
+            <thead>
+                <tr>
+                    <th v-for='h in heads'>${ h }</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for='t in todos'>
+                    <td><a :href="'https://detail.tmall.com/item.htm?id=' + t.itemId" target="blank">${ t.itemId }</a></td>
+                    <td>${ t.kw }</td>
+                    <td>${ t.task }</td>
+                    <td>${ t.created_at | datetime }</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @click="delete_todo(t)">删除</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    Vue.filter('datetime', function (value) {
+        var d = value;
+        if (typeof(value)==='number') {
+            d = new Date(value*1000);
+        }
+        return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate() + ' ' + d.getHours() + ':' + d.getMinutes();
+    });
+    var app = new Vue({
+        el: '#app',
+        delimiters: ['${','}'],
+        data: {
+            todos: [],
+            heads: ['itemId', '关键字', '任务', '创建时间', '操作'],
+            todo: {
+                itemId: '',
+                kw: '',
+                task: ''
+            },
+            page_size: 10,
+        },
+        created () {
+            this.init();
+        },
+        methods: {
+            init () {
+                url = '/api/todos'
+                fetch(url+ '?page_size=' + this.page_size)
+                .then(resp => resp.json())
+                .then(data => {
+                    this.todos = data.todos;
+                })
+            },
+            parse_url (url) {
+                var re = /[&|\?]id=(\w+)/;
+                var a = re.exec(url)
+                if (a) {
+                    return a[1]
+                }
+            },
+            new_todo () {
+                var t = this.todo
+                if (t.url!=="") {
+                    var todo = {itemId: this.parse_url(t.url), task: t.task, kw: t.kw}
+                } else {
+                    var todo = {itemId: false, task: t.task, kw: t.kw}
+                }
+                var url = '/api/todos'
+                fetch(url, {
+                    method: 'POST', // or 'PUT'
+                    body: JSON.stringify(todo), // data can be `string` or {object}!
+                    headers: new Headers({
+                        'Content-Type': 'application/json'
+                    })
+                    }).then(res => res.json())
+                    .catch(error => console.log('Error:', error))
+                    .then(response => {
+                        console.log('Success:', response);
+                        this.init()
+                        this.todo.url = ''
+                        this.todo.task = ''
+                        this.todo.kw = ''
+                    });
+            },
+            update_todo () {
+                //
+            },
+            delete_todo (t) {
+                fetch('/api/todos/' + t.id + '/delete', {
+                    method: 'POST',
+                    headers: new Headers({
+                        'Content-Type': 'application/json'
+                    })
+                }).then(res => res.json())
+                .catch(error => console.log('Error:', error))
+                .then(response => {
+                    this.todos = this.todos.filter(todo => {
+                        return todo.id != response.id;
+                    })
+                });
+            },
+            kd(kd) {
+                this.todo.task = kd
+            },
+        }
+    })
+</script>
+{% endblock %}
