@@ -129,6 +129,9 @@ async def fetch(session, url1, cs, names):
                         print(e)
                 else:
                     msg = ''
+            else:
+                mark = ''
+                msg = ''
             fapiao = FaPiao(nick=nick, shop=cs['x'], id=tradeId, status=status, createTime=createTime, price=price, flag=flag, mark=mark, msg=msg)
             if num == 0:
                 await fapiao.save()
@@ -179,7 +182,7 @@ async def fetch(session, url1, cs, names):
                             await trade.update()
                  
 @post('/api/trades')
-async def api_create_trade(request, *, names, cookie, pageNum, memo='', start='', end=''):
+async def api_create_trade(request, *, names, cookie, pageNum, memo='', start='', end='', userAgent):
     """
     当旺旺出现时，保存订单
     """
@@ -189,12 +192,15 @@ async def api_create_trade(request, *, names, cookie, pageNum, memo='', start=''
     print(shopId, names)
     names = names.split('\n')
     names = [x.lower() for x in names]
+    headers['user-agent'] = userAgent
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers, cookies=cs) as session:
         for page in range(1, int(pageNum)+1):
             ps['pageNum'] = page
-            ps['dateBegin'] = str(int(d.timestamp(d.strptime(start, '%Y-%m-%d'))*1000))
-            ps['dateEnd'] = str(int(d.timestamp(d.strptime(end, '%Y-%m-%d'))*1000))
+            utc_format='%Y-%m-%dT%H:%M:%S.%fZ'
+            ps['dateBegin'] = str(int(d.strptime(start, utc_format).timestamp()*1000))
+            ps['dateEnd'] = str(int(d.strptime(end, utc_format).timestamp()*1000))
+            print(ps['dateBegin'], ps['dateEnd'])
             print('page', page)
             if page > 1:
                 ps['prePageNo'] = page - 1

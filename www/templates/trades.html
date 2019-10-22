@@ -49,6 +49,10 @@
             changeBackgroundColor('.blue', 'lightblue')
         })
     </script>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="../static/js/moment-with-locales.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
 {% endblock %}
 
 {% block content %}
@@ -60,9 +64,19 @@
         输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie">
         <button @click="reset1()">重置</button><br>
         订单页数：<input type="number" v-model.trim='pageNum' placeholder="设置页数">
-        从：<input type="date" v-model="start">到：<input type="date" v-model="end">
-        <input type="datetime-local" v-model='test'>
-        <br>
+        <div class="block">
+          <div class="block">
+            <span class="demonstration">成交时间: </span>
+            <el-date-picker
+              v-model="value"
+              type="datetimerange"
+              :picker-options="pickerOptions"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              align="right">
+            </el-date-picker>
+          </div>
         订单数量：<input type="number" v-model='page_size' placeholder="设置页数">
         <br>
         标记的备注：<input type="text" v-model.trim='memo'><br>
@@ -132,6 +146,13 @@
 
 
     <script>
+        function startEnd(picker, day, endDay=0) {
+            const end = moment().subtract(endDay, 'days');
+            const start = moment().subtract(day, 'days')
+            picker.$emit('pick', [start, end]);
+        }
+        const end = new Date();
+        const start = new Date();
         var app = new Vue({
             el: '#app',
             delimiters: ['${','}'],
@@ -143,13 +164,37 @@
                 name3: '',
                 memo: '',
                 cookie: '',
-                start: '',
-                end: '',
                 test: '',
                 pageNum: 1,
                 page_size: 200,
                 fields: ['nick', 'id', 'flag', 'price', 'wuliu', 'shop', 'status', 'createTime'],
-                heads: ['旺旺', '订单号', '旗子', '价格', '物流', '店铺', '交易状态', '交易时间', '操作']
+                heads: ['旺旺', '订单号', '旗子', '价格', '物流', '店铺', '交易状态', '交易时间', '操作'],
+                pickerOptions: {
+                    shortcuts: [
+                    {
+                        text: '最近一天',
+                            onClick(picker) {
+                                startEnd(picker, 1);
+                            }
+                        },{
+                        text: '最近二天',
+                            onClick(picker) {
+                                startEnd(picker, 2);
+                            }
+                        },{
+                            text: '最近一周',
+                            onClick(picker) {
+                                startEnd(picker, 7);
+                            }
+                        }, {
+                            text: '最近一个月',
+                            onClick(picker) {
+                                startEnd(picker, 30);
+                            }
+                        }
+                    ]
+                },
+                value: [moment().subtract(2, 'days'), moment()],
             },
             computed: {
                 parse_cookie () {
@@ -188,13 +233,6 @@
             },
             created () {
                 this.init();
-                var now = new Date();
-                function convert_time (s) {
-                    return s>9?s:'0'+s
-                }
-                var ct = now.getFullYear() + '-' + convert_time(now.getMonth() + 1) + '-' + convert_time(now.getDate()-1)
-                this.start = ct
-                this.end = now.getFullYear() + '-' + convert_time(now.getMonth() + 1) + '-' + convert_time(now.getDate()+1)
                 $('#btn2').hide()
             },
             methods: {
@@ -220,7 +258,8 @@
                     var data = {'names': this.names + '\n' + this.names2, 
                         'cookie': this.parse_cookie, 'pageNum': this.pageNum,
                         'memo': this.memo,
-                        'start': this.start, 'end': this.end
+                        'start': this.value[0], 'end': this.value[1],
+                        'userAgent': navigator.userAgent
                         }
                     var url = '/api/trades'
                     if (this.cookie!='' & (this.names!='' | this.names2!='')) {

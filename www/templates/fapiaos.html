@@ -40,10 +40,6 @@
         </thead>
         <tbody>
             <tr v-for='t in filterItems'>
-                <td class='td'>${ t.nick }</td>
-                <td class='td'>${ t.price }</td>
-                <td class='td'>${ filterShop(t.shop) }</td>
-                <td>${ t.status }</td>
                 <td>
                     <div class="btn-group">
                         <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -51,13 +47,16 @@
                         </button>
                         <div class="dropdown-menu">
                             <span class="dropdown-item" href="#">${ t.id }</span>
+                            <span class="dropdown-item" href="#">${ t.nick }</span>
+                            <span class="dropdown-item" href="#">${ t.price }</span>
+                            <!-- <span class="dropdown-item" href="#">${ t.filterShop(t.shop) }</span> -->
                             <span class="dropdown-item" href="#">${ t.createTime }</span><br>
                             <span class="dropdown-item" href="#">${ t.flag }</span>
+                            <span class="dropdown-item" href="#">${ t.status }</span>
                         </div>
                     </div>
                 </td>
-                <td v-html="t.mark">
-                </td>
+                <td v-html="t.mark"></td>
                 <td class='td'>${ t.msg }</td>
             </tr>
         </tbody>
@@ -84,7 +83,8 @@
                 { text: 'Two', value: '2933051711' },
                 { text: 'Three', value: '925025092' }
             ],
-            heads: ['旺旺', '价格', '店铺', '状态', '更多', '备注', '留言',],
+            head: ['旺旺', '价格', '店铺', '状态', '更多', '备注', '留言',],
+            heads: ['更多', '备注', '留言', ],
             fields: ['nick', 'id', 'flag', 'price', 'shop', 'status', 'mark', 'msg', 'createTime'],
         },
         computed: {
