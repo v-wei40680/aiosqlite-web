@@ -79,7 +79,6 @@
           </div>
         订单数量：<input type="number" v-model='page_size' placeholder="设置页数">
         <br>
-        标记的备注：<input type="text" v-model.trim='memo'><br>
         网名：<textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
         <button @click='clear' id='btn1'>换名</button>
         <button @click='clear2' id='btn2'>换回来</button>
@@ -162,7 +161,6 @@
                 names: '',
                 names2: '',
                 name3: '',
-                memo: '',
                 cookie: '',
                 test: '',
                 pageNum: 1,
@@ -257,7 +255,6 @@
                     localStorage.setItem('names2', this.names2);
                     var data = {'names': this.names + '\n' + this.names2, 
                         'cookie': this.parse_cookie, 'pageNum': this.pageNum,
-                        'memo': this.memo,
                         'start': this.value[0], 'end': this.value[1],
                         'userAgent': navigator.userAgent
                         }

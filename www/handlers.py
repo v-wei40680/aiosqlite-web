@@ -113,7 +113,6 @@ async def fetch(session, url1, cs, names):
                 ps1['_tb_token_'] = cs['_tb_token_']
                 ps1['biz_order_id'] = m['id']
                 ps1['flag'] = 5
-                ps1['memo'] = memo
                 print(url, ps1)
                 async with session.post(url, data=ps1) as resp:
                     # print(await resp.text())
