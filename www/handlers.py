@@ -6,7 +6,7 @@ __author__ = 'Michael Liao'
 ' url handlers '
 
 import re, time, json, logging, hashlib, base64, asyncio
-from datetime import datetime as d
+from datetime import datetime as d, timedelta
 
 import aiohttp
 from aiohttp import web
@@ -106,42 +106,7 @@ async def fetch(session, url1, cs, names):
             status = m['statusInfo']['text']  # 交易状态
             shop = cs['x']
             o = m['buyer']['operations']
-            num = await FaPiao.findNumber('count(id)', "id=?", [tradeId,])
-            if num == 0:
-                if len(m['operations'][0].keys()) == 7 and flag != 5:
-                    # 有备注
-                    mark_url = base_url+ m['operations'][0]['dataUrl']
-                    async with session.get(mark_url) as r:
-                        mark = await r.text()
-                        mark = json.loads(mark)['tip']
-                else:
-                    mark = ''
-                if len(o) > 1:
-                    # 有留言
-                    try:
-                        msg_url = base_url + o[1]['dataUrl']
-                        async with session.get(msg_url) as r:
-                            msg = await r.text()
-                            msg = json.loads(msg)['tip']
-                            print(msg)
-                    except KeyError as e:
-                        msg = ''
-                        print(e)
-                else:
-                    msg = ''
-            else:
-                mark = ''
-                msg = ''
-            fapiao = FaPiao(nick=nick, shop=cs['x'], id=tradeId, status=status, createTime=createTime, price=price, flag=flag, mark=mark, msg=msg)
-            if num == 0:
-                await fapiao.save()
-            elif num == 1:
-                fapiao = await FaPiao.find(tradeId)
-                fapiao.status = status
-                fapiao.flag = flag
-                fapiao.mark = mark
-                await fapiao.update()
-            if nick.lower() in names and flag != 5 and (status != '交易关闭' and status != '等待买家付款'):
+            if nick in names and flag != 5 and (status != '交易关闭' and status != '等待买家付款'):
                 'do flag'
                 url = base_url + m['operations'][0]['dataUrl']
                 ps1 = get_params(params_flag)
@@ -153,8 +118,9 @@ async def fetch(session, url1, cs, names):
                 async with session.post(url, data=ps1) as resp:
                     # print(await resp.text())
                     flag = ps1['flag']
+            print(tradeId, createTime, price, nick, flag, status, shop)  
             num = await Trade.findNumber('count(id)', "id=?", [tradeId,])
-            if nick.lower() in names:
+            if nick in names:
                 trade = Trade(id=tradeId, createTime=createTime, price=price, nick=nick, flag=flag, status=status, shop=shop)
                 print("nums: ", num)
                 if num == 0:
@@ -189,17 +155,16 @@ async def api_create_trade(request, *, names, cookie, pageNum, memo='', start=''
     cs = parse_cookie(cookie)
     shopId = cs['x']
     await save_or_update_cookie(shopId, cookie)
+    names = names.strip().split('\n')
     print(shopId, names)
-    names = names.split('\n')
-    names = [x.lower() for x in names]
     headers['user-agent'] = userAgent
     url1 = 'https://trade.taobao.com/trade/itemlist/asyncSold.htm?event_submit_do_query=1&_input_charset=utf8'
     async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(verify_ssl=False), headers=headers, cookies=cs) as session:
         for page in range(1, int(pageNum)+1):
             ps['pageNum'] = page
             utc_format='%Y-%m-%dT%H:%M:%S.%fZ'
-            ps['dateBegin'] = str(int(d.strptime(start, utc_format).timestamp()*1000))
-            ps['dateEnd'] = str(int(d.strptime(end, utc_format).timestamp()*1000))
+            ps['dateBegin'] = str(int((d.strptime(start, utc_format) + timedelta(hours=8)).timestamp()*1000))
+            ps['dateEnd'] = str(int((d.strptime(end, utc_format) + timedelta(hours=8)).timestamp()*1000))
             print(ps['dateBegin'], ps['dateEnd'])
             print('page', page)
             if page > 1:
