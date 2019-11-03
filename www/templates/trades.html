@@ -342,6 +342,10 @@
                     console.log('sleep 9 min')
                 }
             } , parseInt(1000*60*(Math.random()+9)))
+            
+            setInterval(function () {
+                app.value = [moment().subtract(2, 'days'), moment()]
+            }, 1000)
         })
     </script>
 {% endblock %}

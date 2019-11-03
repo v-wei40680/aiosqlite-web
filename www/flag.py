@@ -15,8 +15,7 @@ returnUrl:
 logisticsService: 
 from_flag: 
 biz_order_id: 547956929022248730
-flag: 1
-memo: 1"""
+flag: 1"""
 
 params_orders = """auctionType: 0
 close: 0
