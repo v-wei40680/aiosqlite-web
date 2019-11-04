@@ -5,20 +5,25 @@
 
 {% block content %}
 <div id="app">
-    输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
-    订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
-    订单数量：<input type="number" v-model='page_size' placeholder="设置页数"><br>
-    标记的备注：<input type="text" v-model.trim='memo'><br>
-    <ul v-for="c in shop_cookies">
-        <li>
-            <span v-if="c.updated_at">
-                <span v-text="to_time_str(c.updated_at)"></span>
-            </span>
-            <button class="btn btn-danger" @click='change_cookie(c.cookie_str)'>换${ filterShop(c.id) }cookie</button>
-        </li>
-        
-    </ul>
-    <br>
+    <button type="button" class="btn btn-primary" data-toggle="collapse" 
+        data-target="#form">
+        显示/隐藏
+    </button>
+    <div id='form' class='collapse'>
+        输入Cookie：<input type="search" v-model='cookie' placeholder="设置cookie"><br>
+        订单页数：<input type="number" v-model='pageNum' placeholder="设置页数"><br>
+        订单数量：<input type="number" v-model='page_size' placeholder="设置页数"><br>
+        标记的备注：<input type="text" v-model.trim='memo'><br>
+        <ul v-for="c in shop_cookies">
+            <li>
+                <span v-if="c.updated_at">
+                    <span v-text="to_time_str(c.updated_at)"></span>
+                </span>
+                <button class="btn btn-danger" @click='change_cookie(c.cookie_str)'>换${ filterShop(c.id) }cookie</button>
+            </li>
+            
+        </ul>
+    </div>
     店铺id：<span v-text='re_shop_id'></span><br>
     <button class="btn btn-primary" @click='post_trades'>开始</button>
     <button class="btn btn-success" @click='init'>更新</button>

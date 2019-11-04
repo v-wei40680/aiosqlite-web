@@ -50,98 +50,106 @@
         })
     </script>
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
     <script src="../static/js/moment-with-locales.js"></script>
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
 
 {% endblock %}
 
 {% block content %}
+<div id="app">
     <div class="point pink"></div>
     <div class="point read"></div>
     <div class="point green"></div>
     <div class="point blue"></div>
-    <div id="app">
+    <button type="button" class="btn btn-primary" data-toggle="collapse" 
+        data-target="#form">
+        显示/隐藏
+    </button>
+    <div id='form' class='collapse show'>
         输入Cookie：<input type="search" v-model.trim='cookie' placeholder="设置cookie">
         <button @click="reset1()">重置</button><br>
         订单页数：<input type="number" v-model.trim='pageNum' placeholder="设置页数">
         <div class="block">
-          <div class="block">
             <span class="demonstration">成交时间: </span>
             <el-date-picker
-              v-model="value"
-              type="datetimerange"
-              :picker-options="pickerOptions"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              align="right">
+                v-model="value"
+                type="datetimerange"
+                :picker-options="pickerOptions"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                align="right">
             </el-date-picker>
-          </div>
-        订单数量：<input type="number" v-model='page_size' placeholder="设置页数">
-        <br>
-        网名：<textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
-        <button @click='clear' id='btn1'>换名</button>
-        <button @click='clear2' id='btn2'>换回来</button>
-        网名第二天：<textarea v-model.trim='names2' name='text' cols="30" rows="10"></textarea>
-        <br>
-        店铺id：<span v-text='re_shop_id'></span><br>
-        <button class="btn btn-primary" @click='post_trades'>开始</button>
-        <button class="btn btn-success" @click='init'>更新</button>
-        <button @click="reset()">重置</button>
-        <button @click='kd("关闭")'>关闭</button>
-        <button @click='kd("申通")'>申通</button>
-        <button @click='kd("韵达")'>韵达</button>
-        <button @click='kd("百世")'>百世</button>
-        <button @click='kd("顺丰")'>顺丰</button>
-        <button @click='kd("邮政")'>邮政</button>
-        <button @click='kd("2933051711")'>亿维办公</button>
-        <button @click='kd("925025092")'>亿维专卖店</button>
-        <button @click='kd("3079394145")'>通众旗舰店</button>
-        <button @click='kd("1584616501")'>易加</button>
-        <input type="search" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
-        <button class="btn btn-danger" @click='kd("")'>清空</button>
-        <div class="table-responsive">
-            <table class="table ">
-                <thead>
-                    <tr>
-                        <th v-for='h in heads'>${ h }</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for='t in filterItems'>
-                        <td><span @click='kd(t.nick)'>${ t.nick }</span></td>
-                        <td>
-                            <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">${ t.id }</a></td>
-                        <td>
-                            <span v-if="t.flag==5" style="color: purple">${ t.flag }</span>
-                            <span v-else>${ t.flag }</span>
-                        </td>
-                        <td>${ t.price }</td>
-                        <td>
-                            <span v-if="t.wuliu=='物流公司：申通快递 '">
-                                <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
-                                    ${ t.wuliu }
-                                </a>
-                            </span>
-                            <span v-else style="background: red">
-                                <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
-                                ${ t.wuliu }
-                            </a></span>
-                        </td>
-                        <td>${ filterShop(t.shop) }</td>
-                        <td>
-                            <span v-if="t.status=='交易关闭'" style="background: red">${ t.status }</span>
-                            <span v-else>${ t.status }</span>
-                        </td>
-                        <td>${ t.createTime }</td>
-                        <td>
-                            <button class="btn btn-danger btn-sm" @click="del_trade(t)">删除</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
+    订单数量：<input type="number" v-model='page_size' placeholder="设置页数">
+    <br>
+    网名：<textarea v-model.trim='names' name='text' id="" cols="30" rows="10"></textarea>
+    <button @click='clear' id='btn1'>换名</button>
+    <button @click='clear2' id='btn2'>换回来</button>
+    网名第二天：<textarea v-model.trim='names2' name='text' cols="30" rows="10"></textarea>
     </div>
+    店铺id：<span v-text='re_shop_id'></span><br>
+    <button class="btn btn-primary" @click='post_trades'>开始</button>
+    <button class="btn btn-success" @click='init'>更新</button>
+    <button @click="reset()">重置</button>
+    <button @click='kd("关闭")'>关闭</button>
+    <button @click='kd("申通")'>申通</button>
+    <button @click='kd("韵达")'>韵达</button>
+    <button @click='kd("百世")'>百世</button>
+    <button @click='kd("顺丰")'>顺丰</button>
+    <button @click='kd("邮政")'>邮政</button>
+    <button @click='kd("2933051711")'>亿维办公</button>
+    <button @click='kd("925025092")'>亿维专卖店</button>
+    <button @click='kd("3079394145")'>通众旗舰店</button>
+    <button @click='kd("1584616501")'>易加</button>
+    <input type="search" class="form-control mt-3 mb-3" placeholder="筛选" v-model.trim="search">
+    <button class="btn btn-danger" @click='kd("")'>清空</button>
+
+    <div class="table-responsive">
+        <table class="table ">
+            <thead>
+                <tr>
+                    <th v-for='h in heads'>${ h }</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for='t in filterItems'>
+                    <td><span @click='kd(t.nick)'>${ t.nick }</span></td>
+                    <td>
+                        <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">${ t.id }</a></td>
+                    <td>
+                        <span v-if="t.flag==5" style="color: purple">${ t.flag }</span>
+                        <span v-else>${ t.flag }</span>
+                    </td>
+                    <td>${ t.price }</td>
+                    <td>
+                        <span v-if="t.wuliu=='物流公司：申通快递 '">
+                            <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
+                                ${ t.wuliu }
+                            </a>
+                        </span>
+                        <span v-else style="background: red">
+                            <a :href="'https://wuliu.taobao.com/user/order_detail_new.htm?trade_id=' + t.id + '&seller_id=' + t.shop" target="blank">
+                            ${ t.wuliu }
+                        </a></span>
+                    </td>
+                    <td>${ filterShop(t.shop) }</td>
+                    <td>
+                        <span v-if="t.status=='交易关闭'" style="background: red">${ t.status }</span>
+                        <span v-else>${ t.status }</span>
+                    </td>
+                    <td>${ t.createTime }</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @click="del_trade(t)">删除</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+</div>
 
 
     <script>
@@ -330,6 +338,45 @@
                     this.name3 = ''
                     $('#btn2').hide()
                     $('#btn1').show()
+                },
+                clearFilter() {
+                    this.$refs.filterTable.clearFilter();
+                },
+                formatter(row, column) {
+                    return row.address;
+                },
+                filterTag(value, row) {
+                    return row.tag === value;
+                },
+                filterHandler(value, row, column) {
+                    const property = column['property'];
+                    return row[property] === value;
+                },
+                getSummaries(param) {
+                    const { columns, data } = param;
+                    const sums = [];
+                    columns.forEach((column, index) => {
+                    if (index === 0) {
+                        sums[index] = '总价';
+                        return;
+                    }
+                    const values = data.map(item => Number(item[column.property]));
+                    if (!values.every(value => isNaN(value))) {
+                        sums[index] = values.reduce((prev, curr) => {
+                        const value = Number(curr);
+                        if (!isNaN(value)) {
+                            return prev + curr;
+                        } else {
+                            return prev;
+                        }
+                        }, 0);
+                        sums[index] += ' 元';
+                    } else {
+                        sums[index] = 'N/A';
+                    }
+                    });
+
+                    return sums;
                 }
             }
         })
