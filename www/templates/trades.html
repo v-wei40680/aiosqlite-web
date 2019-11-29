@@ -49,12 +49,11 @@
             changeBackgroundColor('.blue', 'lightblue')
         })
     </script>
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
-    <link rel="stylesheet" href="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.css">
     <script src="../static/js/moment-with-locales.js"></script>
-    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-    <script src="https://unpkg.com/bootstrap-table@1.15.5/dist/bootstrap-table.min.js"></script>
-
+    <link rel="stylesheet" href="../static/css/ele.css">
+    <script src="../static/js/ele.js"></script>
+    <script src="../static/js/xlsx.full.min.js"></script>
+    <script src="../static/js/FileSaver.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -93,6 +92,7 @@
     店铺id：<span v-text='re_shop_id'></span><br>
     <button class="btn btn-primary" @click='post_trades'>开始</button>
     <button class="btn btn-success" @click='init'>更新</button>
+    <el-button type="primary" @click="exportExcel('xls')">导出订单</el-button>
     <button @click="reset()">重置</button>
     <button @click='kd("关闭")'>关闭</button>
     <button @click='kd("申通")'>申通</button>
@@ -108,7 +108,7 @@
     <button class="btn btn-danger" @click='kd("")'>清空</button>
 
     <div class="table-responsive">
-        <table class="table ">
+        <table class="table " id="tableExcel">
             <thead>
                 <tr>
                     <th v-for='h in heads'>${ h }</th>
@@ -118,7 +118,7 @@
                 <tr v-for='t in filterItems'>
                     <td><span @click='kd(t.nick)'>${ t.nick }</span></td>
                     <td>
-                        <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">${ t.id }</a></td>
+                        <a :href="'https://trade.tmall.com/detail/orderDetail.htm?bizOrderId='+t.id" target="blank">'${ t.id }</a></td>
                     <td>
                         <span v-if="t.flag==5" style="color: purple">${ t.flag }</span>
                         <span v-else>${ t.flag }</span>
@@ -298,9 +298,9 @@
                     } else if (shop_id == '925025092') {
                         return '亿维通众专卖店'
                     } else if (shop_id == '2829884134') {
-                        return '众泰专营店'
+                        return '众泰办公专营店'
                     } else if (shop_id == '1584616501') {
-                        return '易加'
+                        return '通众易加专卖店'
                     }
                 },
                 kd(kd) {
@@ -342,41 +342,12 @@
                 clearFilter() {
                     this.$refs.filterTable.clearFilter();
                 },
-                formatter(row, column) {
-                    return row.address;
-                },
-                filterTag(value, row) {
-                    return row.tag === value;
-                },
-                filterHandler(value, row, column) {
-                    const property = column['property'];
-                    return row[property] === value;
-                },
-                getSummaries(param) {
-                    const { columns, data } = param;
-                    const sums = [];
-                    columns.forEach((column, index) => {
-                    if (index === 0) {
-                        sums[index] = '总价';
-                        return;
-                    }
-                    const values = data.map(item => Number(item[column.property]));
-                    if (!values.every(value => isNaN(value))) {
-                        sums[index] = values.reduce((prev, curr) => {
-                        const value = Number(curr);
-                        if (!isNaN(value)) {
-                            return prev + curr;
-                        } else {
-                            return prev;
-                        }
-                        }, 0);
-                        sums[index] += ' 元';
-                    } else {
-                        sums[index] = 'N/A';
-                    }
-                    });
-
-                    return sums;
+                exportExcel (type, fn, dl) {
+                    var elt = document.getElementById('tableExcel');
+                    var wb = XLSX.utils.table_to_book(elt, {sheet:"Sheet JS"});
+                    return dl ?
+                        XLSX.write(wb, {bookType:type, bookSST:true, type: 'base64'}) :
+                        XLSX.writeFile(wb, fn || ('彩色订单导出' + new Date().getTime() + '.' + (type || 'xlsx')));
                 }
             }
         })
